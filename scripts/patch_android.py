@@ -4,7 +4,6 @@ manifest = Path("android/app/src/main/AndroidManifest.xml")
 text = manifest.read_text(encoding="utf-8")
 permissions = """
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 """
