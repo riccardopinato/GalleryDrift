@@ -9,6 +9,7 @@ import 'search/visual_index.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
 import 'widgets/local_photo.dart';
+import 'services/gallery_thumbnail_cache.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,7 +72,10 @@ class _GalleryHomeState extends State<GalleryHome> {
 
   Future<void> _openSettings() async {
     final changed=await showAlbumSettings(context,_source,_selected);
-    if(mounted && changed==true) await _refresh();
+    if(mounted && changed==true) {
+      GalleryThumbnailCache.instance.clear();
+      await _refresh();
+    }
   }
 
   Future<void> _toggleFavorite(AssetEntity photo) async {
@@ -83,6 +87,7 @@ class _GalleryHomeState extends State<GalleryHome> {
 
   Future<void> _onTrashed(AssetEntity photo) async {
     _source.applyTrashed(photo.id);
+    GalleryThumbnailCache.instance.evict(photo.id);
     _visual.forget(photo.id);
     // An asset removed in the viewer is also removed from the canvas,
     // search results, and the app-local favorites.
@@ -150,6 +155,8 @@ class _GalleryHomeState extends State<GalleryHome> {
         hintText:'Gallery Drift  ·  ∞',
         recenterTooltip:'Center',
         onOpen:_openPhoto,
+        prefetchItem:(context,asset,zoom)=>
+          GalleryThumbnailCache.instance.prefetch(asset),
         tileBuilder:(context,asset,zoom)=>LocalPhoto(
           key:ValueKey(asset.id),asset:asset)),
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
