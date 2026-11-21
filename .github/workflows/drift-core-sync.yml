@@ -36,7 +36,12 @@ jobs:
           fi
           branch="bot/drift-core-${new_sha:0:12}"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
-            echo "Update branch already exists; skip duplicate PR"
+            echo "Update branch already exists"
+            if [[ -z "$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')" ]]; then
+              gh pr create --base main --head "$branch" \
+                --title "deps: update shared Drift Core ${new_sha:0:12}" \
+                --body "Review-gated shared-engine upgrade. Run Flutter CI and device QA before merge."
+            fi
             exit 0
           fi
           git config user.name "github-actions[bot]"
