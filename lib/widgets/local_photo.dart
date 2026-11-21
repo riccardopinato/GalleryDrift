@@ -58,3 +58,4 @@ class _LocalPhotoState extends State<LocalPhoto> {
     },
     );
   }
+}
