@@ -22,6 +22,27 @@ jobs:
           channel: stable
           flutter-version: '3.50.1'
           cache: true
+      - name: Configure Flutter Gradle composite plugin repositories
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          root = Path(os.environ['FLUTTER_ROOT'])
+          path = root / 'packages/flutter_tools/gradle/settings.gradle.kts'
+          text = path.read_text(encoding='utf-8')
+          if 'pluginManagement {' not in text:
+              header = (
+                  'pluginManagement {\n'
+                  '    repositories {\n'
+                  '        google()\n'
+                  '        mavenCentral()\n'
+                  '        gradlePluginPortal()\n'
+                  '    }\n'
+                  '}\n\n'
+              )
+              path.write_text(header + text, encoding='utf-8')
+          print('FLUTTER_COMPOSITE_PLUGIN_REPOS_OK')
+          PY
       - name: Create Android shell
         run: flutter create --project-name gallerydrift --org com.riccardopinato --platforms=android .
       - name: Remove demo test
