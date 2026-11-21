@@ -21,6 +21,21 @@ class LocalGallery {
 
   AlbumPosition? positionFor(String assetId) => _positions[assetId];
 
+  /// Keep currently displayed asset positions coherent after a confirmed
+  /// device-trash operation. Indexes later in that same album shift down one.
+  void applyTrashed(String assetId) {
+    final removed = _positions.remove(assetId);
+    if (removed == null) return;
+    for (final entry in _positions.entries.toList()) {
+      final previous = entry.value;
+      if (previous.album.id == removed.album.id &&
+          previous.index > removed.index) {
+        _positions[entry.key] = AlbumPosition(
+          album: previous.album, index: previous.index - 1);
+      }
+    }
+  }
+
   Future<Set<String>> selected() async {
     final prefs = await SharedPreferences.getInstance();
     return (prefs.getStringList(selectedKey) ?? const []).toSet();
