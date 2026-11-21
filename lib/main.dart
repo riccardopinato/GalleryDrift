@@ -77,6 +77,7 @@ class _GalleryHomeState extends State<GalleryHome> {
   }
 
   Future<void> _onTrashed(AssetEntity photo) async {
+    _source.applyTrashed(photo.id);
     // An asset removed in the viewer is also removed from the canvas,
     // search results, and the app-local favorites.
     final next = {..._favorites}..remove(photo.id);
