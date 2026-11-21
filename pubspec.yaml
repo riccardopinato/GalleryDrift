@@ -1,0 +1,22 @@
+name: gallerydrift
+description: Infinite canvas for the user's explicitly selected local photo albums.
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  drift_core:
+    git:
+      url: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery.git
+      ref: f9e35e0a11f76bf93992b4527aab42191b4ac545
+      path: packages/drift_core
+  photo_manager: ^3.12.0
+  shared_preferences: ^2.5.3
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
