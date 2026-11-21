@@ -21,6 +21,9 @@ class LocalGallery {
 
   AlbumPosition? positionFor(String assetId) => _positions[assetId];
 
+  String albumNameFor(String assetId) =>
+      _positions[assetId]?.album.name ?? '';
+
   /// Keep currently displayed asset positions coherent after a confirmed
   /// device-trash operation. Indexes later in that same album shift down one.
   void applyTrashed(String assetId) {

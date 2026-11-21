@@ -4,6 +4,8 @@ import 'package:drift_core/drift_core.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'localization.dart';
 import 'services/local_gallery.dart';
+import 'search/combined_search.dart';
+import 'search/visual_index.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
 import 'widgets/local_photo.dart';
@@ -36,13 +38,16 @@ class GalleryHome extends StatefulWidget {
 
 class _GalleryHomeState extends State<GalleryHome> {
   final _source=LocalGallery();
+  final _visual=VisualIndex();
   Set<String> _selected = {};
   Set<String> _favorites = {};
   List<AssetEntity> _assets=[];
   bool _busy=true, _favoritesOnly=false;
   String? _error;
 
-  @override void initState(){super.initState();_refresh();}
+  @override void initState(){super.initState();_visual.load();_refresh();}
+
+  @override void dispose(){_visual.dispose();super.dispose();}
 
   Future<void> _refresh() async {
     setState(() {_busy=true;_error=null;});
@@ -78,6 +83,7 @@ class _GalleryHomeState extends State<GalleryHome> {
 
   Future<void> _onTrashed(AssetEntity photo) async {
     _source.applyTrashed(photo.id);
+    _visual.forget(photo.id);
     // An asset removed in the viewer is also removed from the canvas,
     // search results, and the app-local favorites.
     final next = {..._favorites}..remove(photo.id);
@@ -106,7 +112,8 @@ class _GalleryHomeState extends State<GalleryHome> {
 
   Future<void> _search() async {
     final selected=await showSearch<AssetEntity?>(
-      context:context,delegate:_LocalSearch(_assets));
+      context:context,delegate:_LocalSearch(
+        _assets, _source.albumNameFor, _visual));
     if(selected!=null && mounted)_openPhoto(selected);
   }
 
@@ -170,25 +177,83 @@ class _GalleryHomeState extends State<GalleryHome> {
 }
 
 class _LocalSearch extends SearchDelegate<AssetEntity?> {
-  _LocalSearch(this.assets);
+  _LocalSearch(this.assets, this.albumName, this.indexer);
+
   final List<AssetEntity> assets;
-  @override List<Widget> buildActions(BuildContext context)=>[
-    IconButton(onPressed:()=>query='',icon:const Icon(Icons.close))];
-  @override Widget buildLeading(BuildContext context)=>IconButton(
-    onPressed:()=>close(context,null),icon:const Icon(Icons.arrow_back));
-  @override Widget buildResults(BuildContext context)=>buildSuggestions(context);
-  @override Widget buildSuggestions(BuildContext context) {
-    final term=query.toLowerCase().trim();
-    if(term.isEmpty)return const SizedBox.shrink();
-    final matches=assets.where((a)=>(a.title??'').toLowerCase()
-      .contains(term)).take(80).toList();
-    if(matches.isEmpty)return Center(child:Text(GalleryLocale.t('noResult')));
-    return ListView.builder(itemCount:matches.length,itemBuilder:(context,index){
-      final photo=matches[index];
-      return ListTile(
-        leading:SizedBox(width:44,height:44,child:LocalPhoto(asset:photo)),
-        title:Text(photo.title??photo.id),
-        onTap:()=>close(context,photo));
+  final String Function(String) albumName;
+  final VisualIndex indexer;
+
+  @override List<Widget> buildActions(BuildContext context) => [
+    IconButton(onPressed: () => query='', icon: const Icon(Icons.close)),
+  ];
+
+  @override Widget buildLeading(BuildContext context) => IconButton(
+    onPressed: () => close(context,null),
+    icon: const Icon(Icons.arrow_back));
+
+  @override Widget buildResults(BuildContext context) => buildSuggestions(context);
+
+  @override Widget buildSuggestions(BuildContext context) =>
+    AnimatedBuilder(animation: indexer, builder: (context, child) {
+      final documents = [
+        for (final photo in assets)
+          PhotoSearchDocument(id: photo.id,
+            filename: photo.title ?? '',
+            album: albumName(photo.id),
+            labels: indexer.labelsFor(photo)),
+      ];
+      final hits = PhotoSearch.find(query, documents);
+      final lookup = {for (final photo in assets) photo.id: photo};
+      return Column(children: [
+        Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+          child: Row(children: [
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(GalleryLocale.t('visualSearch'),
+                  style: Theme.of(context).textTheme.titleSmall),
+                Text(indexer.isRunning
+                  ? '${GalleryLocale.t('indexing')}: ${indexer.progress} / ${indexer.total}'
+                  : '${GalleryLocale.t('indexed')}: ${indexer.cachedCount} / ${assets.length}',
+                  style: const TextStyle(fontSize: 11, color: Colors.white60)),
+              ])),
+            if (indexer.isRunning) TextButton.icon(
+              onPressed: indexer.cancel, icon: const Icon(Icons.stop),
+              label: Text(GalleryLocale.t('stop')))
+            else TextButton.icon(
+              onPressed: () => indexer.index(assets),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: Text(GalleryLocale.t('analyzePhotos'))),
+            IconButton(tooltip: GalleryLocale.t('clearVisualIndex'),
+              onPressed: indexer.isRunning ? null : indexer.clear,
+              icon: const Icon(Icons.delete_sweep_outlined)),
+          ])),
+        if (indexer.isRunning && indexer.total > 0) LinearProgressIndicator(
+          value: indexer.progress / indexer.total),
+        Padding(padding: const EdgeInsets.fromLTRB(14, 2, 14, 10),
+          child: Text(GalleryLocale.t('visualLimit'),
+            style: const TextStyle(fontSize: 11, color: Colors.white54))),
+        Expanded(child: query.trim().isEmpty ?
+          Center(child: Text(GalleryLocale.t('searchHint'),
+            textAlign: TextAlign.center)) :
+          hits.isEmpty ? Center(child: Text(
+            indexer.cachedCount == 0 ? GalleryLocale.t('indexPrompt') :
+              GalleryLocale.t('noResult'), textAlign: TextAlign.center)) :
+          ListView.builder(itemCount: hits.length,itemBuilder: (context,index) {
+            final hit = hits[index];
+            final photo = lookup[hit.document.id]!;
+            return ListTile(
+              leading: SizedBox(width: 52,height: 52,
+                child: LocalPhoto(asset: photo)),
+              title: Text(photo.title ?? photo.id),
+              subtitle: Text([
+                if (hit.document.album.isNotEmpty) hit.document.album,
+                if (hit.reasons.contains('visual'))
+                  GalleryLocale.t('visualMatch'),
+              ].join(' · '), maxLines: 2,
+                overflow: TextOverflow.ellipsis),
+              onTap: () => close(context,photo),
+            );
+          })),
+      ]);
     });
-  }
 }

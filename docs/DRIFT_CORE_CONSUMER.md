@@ -13,7 +13,7 @@ The gallery NEVER copies Art Drift canvas code: it imports drift_core and suppli
 - Request photo permission from Settings explicitly, then show only the selected albums.
 - Android plugin: photo_manager ^3.12.0 (Apache-2.0), platform MediaStore (photo_manager).
 - Initial canvas indexing is bounded to 800 images per selected album; the album detail now has a separate paged source for browsing the entire folder. Infinite canvas discovery beyond 800, background catalog and live changes still remain to be implemented.
-- Images only in this first integration. Video playback, sophisticated search/visual Lens, ads, purchases and full privacy-policy publication are not implemented.
+- Images only. On-device ML Kit common-category labeling + filename/folder search is implemented behind explicit user action; this is NOT a universal Lens-equivalent. Video playback, open-vocabulary CLIP retrieval, ads, purchases and full privacy-policy publication are not implemented.
 - Favorites are app-local and not Android system favorites.
 - Trash uses Android 11+ MediaStore trash via plugin and system permission confirmation. Older unsupported Android versions fail closed rather than permanently delete media.
 - Play Store media access policy must be reviewed: broad READ_MEDIA_IMAGES is defensible only for sustained photo-gallery core functionality; Data Safety / hosted privacy policy not certified.
