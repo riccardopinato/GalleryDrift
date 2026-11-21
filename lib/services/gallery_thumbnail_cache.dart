@@ -32,6 +32,9 @@ class GalleryThumbnailCache {
     return bytes;
   }
 
+  /// Synchronous hit: a warmed visible tile can paint on its first frame.
+  Uint8List? peek(String id) => _hit(id);
+
   Future<Uint8List?> thumbnail(AssetEntity asset, {bool prefetch = false}) {
     final hit = _hit(asset.id);
     if (hit != null) return Future.value(hit);
