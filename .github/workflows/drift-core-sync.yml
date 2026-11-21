@@ -1,0 +1,50 @@
+name: Drift Core — check shared engine updates
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  dependency-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check canonical Drift Core
+        run: python3 scripts/sync_drift_core.py
+      - name: Open a safe dependency update PR if necessary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- pubspec.yaml docs/DRIFT_CORE_CONSUMER.md; then
+            echo "No core changes"
+            exit 0
+          fi
+          new_sha="$(sed -n 's/^      ref: \([0-9a-f]\{40\}\)$/\1/p' pubspec.yaml)"
+          if [[ ! "$new_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Malformed core SHA"
+            exit 1
+          fi
+          branch="bot/drift-core-${new_sha:0:12}"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "Update branch already exists; skip duplicate PR"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add pubspec.yaml docs/DRIFT_CORE_CONSUMER.md
+          git commit -m "deps: pin Drift Core to ${new_sha}"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "deps: update shared Drift Core ${new_sha:0:12}" \
+            --body "Updates Gallery Drift's immutable shared-engine dependency. Requires Flutter analyze/test/build and human/device review before merge; no automatic promotion to main."
