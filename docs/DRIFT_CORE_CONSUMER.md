@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: f9e35e0a11f76bf93992b4527aab42191b4ac545
+Pinned core source commit: 832ae259aa2988fc3b0e1db261034a596a9a793f
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
