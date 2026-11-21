@@ -28,6 +28,10 @@ jobs:
         run: rm -f test/widget_test.dart
       - name: Patch photo permissions
         run: python3 scripts/patch_android.py
+      - name: Render product launcher icon
+        run: |
+          python3 -m pip install --disable-pip-version-check "CairoSVG==2.7.1"
+          python3 scripts/install_brand_icon.py
       - name: Dependencies (pinned Drift Core Git SHA)
         run: flutter pub get
       - name: Analyze
