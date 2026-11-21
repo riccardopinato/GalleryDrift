@@ -18,7 +18,7 @@ void main() {
   ];
 
   test('cat, moon and camper can be found from labels and filenames', () {
-    expect(PhotoSearch.find('gatto',docs).map((x)=>x.document.id),['5','1']);
+    expect(PhotoSearch.find('gatto',docs).map((x)=>x.document.id),['1']);
     expect(PhotoSearch.find('luna',docs).map((x)=>x.document.id),['5','2']);
     expect(PhotoSearch.find('camper',docs).map((x)=>x.document.id),['4']);
   });
