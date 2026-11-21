@@ -5,7 +5,7 @@ class LocalGallery {
   static const selectedKey = 'gallerydrift.selectedAlbumIds.v1';
   static const favoritesKey = 'gallerydrift.favoriteAssetIds.v1';
   static const permissionOption = PermissionRequestOption(
-    androidPermission: AndroidPermission(type: RequestType.image),
+    androidPermission: AndroidPermission(type: RequestType.image, mediaLocation: false),
   );
 
   Future<Set<String>> selected() async {
