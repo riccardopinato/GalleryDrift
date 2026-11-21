@@ -76,13 +76,31 @@ class _GalleryHomeState extends State<GalleryHome> {
     if(mounted)setState(()=>_favorites=next);
   }
 
+  Future<void> _onTrashed(AssetEntity photo) async {
+    // An asset removed in the viewer is also removed from the canvas,
+    // search results, and the app-local favorites.
+    final next = {..._favorites}..remove(photo.id);
+    if (next.length != _favorites.length) {
+      await _source.saveFavorites(next);
+    }
+    if (!mounted) return;
+    setState(() {
+      _favorites = next;
+      _assets = _assets.where((a) => a.id != photo.id).toList();
+    });
+  }
+
   Future<void> _openPhoto(AssetEntity photo) async {
+    final origin = _source.positionFor(photo.id);
     await Navigator.push<void>(context,MaterialPageRoute(
-      builder:(context)=>PhotoDetail(asset:photo,
-        favorite:_favorites.contains(photo.id),
-        onFavorite:_toggleFavorite,
-        onTrashed:() {setState(()=>_assets=_assets
-          .where((a)=>a.id!=photo.id).toList());})));
+      builder:(context)=>PhotoDetail(
+        asset: photo,
+        album: origin?.album,
+        initialIndex: origin?.index ?? 0,
+        isFavorite: (asset) => _favorites.contains(asset.id),
+        onFavorite: _toggleFavorite,
+        onTrashed: _onTrashed,
+      )));
   }
 
   Future<void> _search() async {

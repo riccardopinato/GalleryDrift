@@ -1,12 +1,25 @@
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class AlbumPosition {
+  const AlbumPosition({required this.album, required this.index});
+
+  final AssetPathEntity album;
+  final int index;
+}
+
 class LocalGallery {
   static const selectedKey = 'gallerydrift.selectedAlbumIds.v1';
   static const favoritesKey = 'gallerydrift.favoriteAssetIds.v1';
   static const permissionOption = PermissionRequestOption(
     androidPermission: AndroidPermission(type: RequestType.image, mediaLocation: false),
   );
+
+  /// Album position of each canvas image, captured while loading its selected
+  /// folder. Duplicate assets belong to the first selected album encountered.
+  final Map<String, AlbumPosition> _positions = {};
+
+  AlbumPosition? positionFor(String assetId) => _positions[assetId];
 
   Future<Set<String>> selected() async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,9 +50,11 @@ class LocalGallery {
   Future<List<AssetPathEntity>> albums() =>
       PhotoManager.getAssetPathList(hasAll: false, type: RequestType.image);
 
-  /// Initial bounded batch to avoid loading an entire 50k photo library.
-  /// This is an MVP limitation, NOT a complete paginated library index.
+  /// Canvas bootstrap: bounded at 800 images per album to avoid freezing
+  /// on very large galleries. The album detail viewer independently pages
+  /// through the FULL folder using MediaStore range queries.
   Future<List<AssetEntity>> selectedPhotos(Set<String> selectedIds) async {
+    _positions.clear();
     if (selectedIds.isEmpty) return [];
     final paths = await albums();
     final result = <AssetEntity>[];
@@ -48,8 +63,13 @@ class LocalGallery {
       if (!selectedIds.contains(path.id)) continue;
       for (var page = 0; page < 8; page++) {
         final chunk = await path.getAssetListPaged(page: page, size: 100);
-        for (final item in chunk) {
-          if (seen.add(item.id)) result.add(item);
+        for (var i = 0; i < chunk.length; i++) {
+          final item = chunk[i];
+          if (seen.add(item.id)) {
+            result.add(item);
+            _positions[item.id] = AlbumPosition(
+              album: path, index: page * 100 + i);
+          }
         }
         if (chunk.length < 100) break;
       }
