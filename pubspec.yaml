@@ -10,7 +10,7 @@ dependencies:
   drift_core:
     git:
       url: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery.git
-      ref: 0596378f441b1074092579006bfa804e1479f7d3
+      ref: dc478a1e63cfc784fc53b7f7ab8fcca43ccf8ac7
       path: packages/drift_core
   photo_manager: ^3.12.0
   shared_preferences: ^2.5.3
