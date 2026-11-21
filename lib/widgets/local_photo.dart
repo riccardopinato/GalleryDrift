@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import '../services/gallery_thumbnail_cache.dart';
 
 /// Image bytes loaded on demand only for mounted tiles, not an eager full scan.
 class LocalPhoto extends StatefulWidget {
@@ -29,13 +30,21 @@ class _LocalPhotoState extends State<LocalPhoto> {
   }
 
   void _load() {
-    _thumbnail = widget.asset.thumbnailDataWithSize(
-      widget.contain ? const ThumbnailSize(1500, 1800) :
-        const ThumbnailSize(420, 420), quality: 85);
+    _thumbnail = widget.contain
+        ? widget.asset.thumbnailDataWithSize(
+            const ThumbnailSize(1500, 1800), quality: 85)
+        : GalleryThumbnailCache.instance.thumbnail(widget.asset);
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<Uint8List?>(
+  Widget build(BuildContext context) {
+    final warm = widget.contain ? null :
+        GalleryThumbnailCache.instance.peek(widget.asset.id);
+    if (warm != null) {
+      return Image.memory(warm, fit: BoxFit.cover,
+          gaplessPlayback: true, filterQuality: FilterQuality.low);
+    }
+    return FutureBuilder<Uint8List?>(
     future: _thumbnail,
     builder: (context, snapshot) {
       if (!snapshot.hasData || snapshot.data == null) {
@@ -47,5 +56,6 @@ class _LocalPhotoState extends State<LocalPhoto> {
         fit: widget.contain ? BoxFit.contain : BoxFit.cover,
         gaplessPlayback: true, filterQuality: FilterQuality.low);
     },
-  );
+    );
+  }
 }
