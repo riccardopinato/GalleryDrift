@@ -37,7 +37,14 @@ class _LocalPhotoState extends State<LocalPhoto> {
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<Uint8List?>(
+  Widget build(BuildContext context) {
+    final warm = widget.contain ? null :
+        GalleryThumbnailCache.instance.peek(widget.asset.id);
+    if (warm != null) {
+      return Image.memory(warm, fit: BoxFit.cover,
+          gaplessPlayback: true, filterQuality: FilterQuality.low);
+    }
+    return FutureBuilder<Uint8List?>(
     future: _thumbnail,
     builder: (context, snapshot) {
       if (!snapshot.hasData || snapshot.data == null) {
@@ -49,5 +56,5 @@ class _LocalPhotoState extends State<LocalPhoto> {
         fit: widget.contain ? BoxFit.contain : BoxFit.cover,
         gaplessPlayback: true, filterQuality: FilterQuality.low);
     },
-  );
-}
+    );
+  }
