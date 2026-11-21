@@ -1,7 +1,7 @@
 # Gallery Drift — shared Auto canvas and prefetch adoption
 
 Core provider: ArtDrift `packages/drift_core`
-Pinned source: `0596378f441b1074092579006bfa804e1479f7d3`
+Pinned source: `bc24434f872a29aeb756bfa29222f59bbed46d10`
 
 ## Shared controls
 - Auto vertically explores the canvas; manual pan/pinch pauses.
