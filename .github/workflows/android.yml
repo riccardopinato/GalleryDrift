@@ -69,6 +69,8 @@ jobs:
           fi
           grep -q "KEY_PASSWORD_INVALID" "$scratch/negative.log"
           echo "SIGNING_PASSWORD_NEGATIVE_TEST_PASS"
+      - name: Regression tests for ARM64 size and ABI policy
+        run: python3 -m unittest discover -s scripts/tests -p 'test_arm64_packaging.py'
       - name: Test release-signature report parser
         run: python3 -m unittest discover -s scripts/tests -p 'test_verify_release_apk.py'
       - name: Create Android shell
@@ -88,12 +90,14 @@ jobs:
       - name: Tests
         run: flutter test
       - name: Android ARM64 internal APK
-        run: flutter build apk --release --target-platform android-arm64
+        run: flutter build apk --release --split-per-abi --target-platform android-arm64
+      - name: Verify ARM64-only ABI and APK size
+        run: python3 scripts/verify_arm64_apk.py --apk build/app/outputs/flutter-apk/app-arm64-v8a-release.apk --max-mib 36
       - name: End-to-end APK PEM signer SHA-256 verification (debug identity)
         shell: bash
         run: |
           set -euo pipefail
-          APK=build/app/outputs/flutter-apk/app-release.apk
+          APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           test -s "$APK"
           test -s "$HOME/.android/debug.keystore"
           mkdir -p build
@@ -105,5 +109,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: GalleryDrift-ARM64-internal-${{ github.sha }}
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           if-no-files-found: error
