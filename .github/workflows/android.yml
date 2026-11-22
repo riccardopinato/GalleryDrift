@@ -43,6 +43,32 @@ jobs:
               path.write_text(header + text, encoding='utf-8')
           print('FLUTTER_COMPOSITE_PLUGIN_REPOS_OK')
           PY
+      - name: Signing preflight unit smoke — good password and wrong password
+        shell: bash
+        run: |
+          set -euo pipefail
+          scratch="$(mktemp -d)"
+          trap 'rm -rf "$scratch"' EXIT
+          keytool -genkeypair -storetype PKCS12 -keystore "$scratch/release.jks" \
+            -alias test-release -keyalg RSA -keysize 2048 -validity 365 \
+            -dname "CN=GalleryDrift Signing Preflight Test" \
+            -storepass local-test-pass-123456 >/dev/null 2>&1
+          export ANDROID_SIGNING_KEYSTORE_PATH="$scratch/release.jks"
+          export ANDROID_KEYSTORE_PASSWORD=local-test-pass-123456
+          export ANDROID_KEY_PASSWORD=local-test-pass-123456
+          export ANDROID_KEY_ALIAS=test-release
+          export ANDROID_CERT_SHA256="$(keytool -list -v -keystore "$scratch/release.jks" \
+            -alias test-release -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            | sed -nE 's/.*SHA256: ([[:xdigit:]:]+)/\1/p' | tr -d ':' | tr 'A-F' 'a-f')"
+          test -n "$ANDROID_CERT_SHA256"
+          java scripts/VerifySigning.java
+          export ANDROID_KEY_PASSWORD=incorrect-key-password
+          if java scripts/VerifySigning.java > "$scratch/negative.log" 2>&1; then
+            echo "::error::Wrong PKCS12 key password was incorrectly accepted"
+            exit 1
+          fi
+          grep -q "KEY_PASSWORD_INVALID" "$scratch/negative.log"
+          echo "SIGNING_PASSWORD_NEGATIVE_TEST_PASS"
       - name: Create Android shell
         run: flutter create --project-name gallerydrift --org com.riccardopinato --platforms=android .
       - name: Remove demo test
