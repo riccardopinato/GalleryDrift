@@ -48,3 +48,19 @@ compilation and tests, not actual ranking on-device. For acceptance:
 
 **No claim of real on-device success until an artifact has been executed and
 benchmarked on physical hardware.**
+
+## Implementation under test
+
+- `lib/semantic_lab/clip_bpe.dart`: CLIP byte-level BPE tokenizer. Exact
+  tokenizer parity still needs a Python golden fixture on the real downloaded JSON.
+- `lib/semantic_lab/mobileclip_models.dart`: HTTPS fetch of ONNX weights,
+  bounded download sizes, 256x256 RGB image preprocessing, 77-token BPE,
+  native ONNX Runtime via Flutter plugin, L2-normalized 512-D vectors.
+- `lib/semantic_lab/semantic_index.dart`: per-image 512-D SQLite vector,
+  modification revision fingerprint, scoped only to folders selected in Gallery.
+- `lib/semantic_lab/background_semantic.dart`: best-effort WorkManager batches
+  with low battery/storage avoidance (not a guaranteed continuous service).
+- `lib/semantic_lab/semantic_lab_screen.dart`: opt-in research license,
+  download, explicit indexing, per-photo cosine ranking, progress/diagnostics.
+- The model is downloaded only after research-only acknowledgement; no weights
+  distributed in GitHub or in the APK.

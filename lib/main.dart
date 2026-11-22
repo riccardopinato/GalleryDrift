@@ -11,6 +11,7 @@ import 'search/visual_index.dart';
 import 'search/background_indexer.dart';
 import 'semantic_lab/background_semantic.dart';
 import 'semantic_lab/semantic_index.dart';
+import 'semantic_lab/semantic_lab_screen.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
 import 'screens/batch_selection.dart';
@@ -228,6 +229,13 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _openSemanticLab() async {
+    await Navigator.push<void>(context,MaterialPageRoute(
+      builder:(_)=>SemanticLabScreen(
+        assets:List<AssetEntity>.of(_assets),
+        onPhoto:_openPhoto)));
+  }
+
   Future<void> _search() async {
     unawaited(_visual.refresh());
     final selected=await showSearch<AssetEntity?>(
@@ -276,7 +284,7 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
         items:displayed,
         cameraKey:_favoritesOnly ? 'gallerydrift.camera.favorites' :
           'gallerydrift.camera.all',
-        compactBrand:'G∞',fullBrand:'gallerydrift  ∞',
+        compactBrand:'G∞ LAB',fullBrand:'gallerydrift AI LAB ∞',
         hintText:'Gallery Drift  ·  ∞',
         recenterTooltip:'Center',
         onOpen:_openPhoto,
@@ -309,6 +317,14 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;
           return SizedBox(height:53,child:Stack(children:[
+            Positioned(left:10,top:5,
+              child:OutlinedButton.icon(
+                onPressed:_openSemanticLab,
+                icon:const Icon(Icons.psychology_alt_outlined,size:17),
+                label:const Text('AI Lab'),
+                style:OutlinedButton.styleFrom(
+                  foregroundColor:const Color(0xFFE5C8A5),
+                  backgroundColor:const Color(0xD3222630)))),
             Positioned(left:w*0.34,width:w*0.36,top:5,
               child:OutlinedButton.icon(onPressed:_search,
                 icon:const Icon(Icons.search,size:18),
