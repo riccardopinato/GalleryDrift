@@ -69,6 +69,8 @@ jobs:
           fi
           grep -q "KEY_PASSWORD_INVALID" "$scratch/negative.log"
           echo "SIGNING_PASSWORD_NEGATIVE_TEST_PASS"
+      - name: Test release-signature report parser
+        run: python3 -m unittest discover -s scripts/tests -p 'test_verify_release_apk.py'
       - name: Create Android shell
         run: flutter create --project-name gallerydrift --org com.riccardopinato --platforms=android .
       - name: Remove demo test
