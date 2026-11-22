@@ -31,7 +31,7 @@ class GalleryDriftApp extends StatelessWidget {
   @override Widget build(BuildContext context) =>
     ValueListenableBuilder<String>(valueListenable:GalleryLocale.current,
       builder:(context,language,_)=>MaterialApp(
-        title:'Gallery Drift',debugShowCheckedModeBanner:false,
+        title:'Gallery Drift AI Lab',debugShowCheckedModeBanner:false,
         theme:GalleryTheme.build(),
         home:const GalleryHome()));
 }
