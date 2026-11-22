@@ -75,7 +75,7 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   Widget build(BuildContext context) {
     return SafeArea(child: Padding(
       padding: const EdgeInsets.fromLTRB(20,16,20,20),
-      child: SizedBox(height: MediaQuery.sizeOf(context).height * 0.72,
+      child: SizedBox(height: MediaQuery.sizeOf(context).height * 0.88,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(GalleryLocale.t('settings'),
             style: Theme.of(context).textTheme.titleLarge),
@@ -128,7 +128,12 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
             Expanded(child: FilledButton(onPressed: _busy ? null : _save,
               child: Text(GalleryLocale.t('apply')))),
           ]),
-          const SizedBox(height:18),
+          SizedBox(
+            height:MediaQuery.sizeOf(context).height * 0.30,
+            child:ListView(
+              padding:EdgeInsets.zero,
+              children:[
+                const SizedBox(height:8),
           Text(GalleryLocale.t('language')),
           Wrap(spacing:4, children: [
             for (final code in GalleryLocale.codes) ChoiceChip(
@@ -173,6 +178,9 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
                 actions: [TextButton(onPressed:()=>Navigator.pop(ctx),
                   child: Text(GalleryLocale.t('close')))])),
             label: Text(GalleryLocale.t('privacy'))),
+              ],
+            ),
+          ),
         ]),
       ),
     ));
