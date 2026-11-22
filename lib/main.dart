@@ -39,7 +39,7 @@ class GalleryHome extends StatefulWidget {
   @override State<GalleryHome> createState()=>_GalleryHomeState();
 }
 
-class _GalleryHomeState extends State<GalleryHome> {
+class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
   final _source=LocalGallery();
   final _visual=VisualIndex();
   Set<String> _selected = {};
@@ -55,6 +55,7 @@ class _GalleryHomeState extends State<GalleryHome> {
 
   @override void initState(){
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _visual.load();
     _mediaCallback = (_) {
       if (!mounted) return;
@@ -70,6 +71,19 @@ class _GalleryHomeState extends State<GalleryHome> {
     _refresh();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    if (_viewerOpen) {
+      // External gallery apps can change media while the viewer is paused.
+      // Stop swipes on a stale album until the user returns to the canvas.
+      _mediaVersion.value++;
+      _pendingMediaChange = true;
+    } else {
+      _scheduleRefresh();
+    }
+  }
+
   void _scheduleRefresh() {
     _changeTimer?.cancel();
     _changeTimer = Timer(const Duration(milliseconds: 600), () {
@@ -78,6 +92,7 @@ class _GalleryHomeState extends State<GalleryHome> {
   }
 
   @override void dispose(){
+    WidgetsBinding.instance.removeObserver(this);
     _changeTimer?.cancel();
     PhotoManager.removeChangeCallback(_mediaCallback);
     PhotoManager.stopChangeNotify().catchError((Object _) {});
@@ -112,6 +127,7 @@ class _GalleryHomeState extends State<GalleryHome> {
           CatalogItemRevision(a.id,a.modifiedDateTime.millisecondsSinceEpoch)],
         [for(final a in photos)
           CatalogItemRevision(a.id,a.modifiedDateTime.millisecondsSinceEpoch)]);
+      if (delta.changed && _visual.isRunning) _visual.cancel();
       for (final id in delta.invalidatedIds) {
         GalleryThumbnailCache.instance.evict(id);
       }

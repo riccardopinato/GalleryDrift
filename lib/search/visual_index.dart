@@ -111,6 +111,7 @@ class VisualIndex extends ChangeNotifier {
             await tmp.writeAsBytes(bytes, flush:true);
             final labels = await labeler.processImage(
               InputImage.fromFilePath(tmp.path));
+            if (_cancel) break;
             _entries[asset.id] = _Record(
               asset.modifiedDateTime.millisecondsSinceEpoch,
               labels.where((label) => label.confidence >= 0.45)

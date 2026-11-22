@@ -17,7 +17,7 @@ not a falsely claimed platform-level delta query.
 | ID | Owner | Intervention | Mandatory evidence |
 |---|---|---|---|
 | GD-01 P0 | GALLERY_ONLY | bounded MediaStore pagination through full album; dedup with first-selected folder | 2,001-photo test, physical album of >800 and >10,000 |
-| GD-02 P0 | GALLERY_ONLY | native MediaStore observation, debounce refresh and scan cancellation | add/modify/rename/remove on Android, background/resume, 10k media |
+| GD-02 P0 | GALLERY_ONLY | native MediaStore observation, debounce refresh, resume reconciliation and scan cancellation | add/modify/rename/remove on Android, background/resume, 10k media |
 | GD-03 P0 | GALLERY_ONLY | explicit Android scoped/limited permissions and OS-confirmed trash | Android 10/13/14/15/16, deny/limited/partial/revoke, recover from system trash |
 | GD-04 P1 | GALLERY_ONLY | source original-file zoom and resolution-tier decoding | 12/48MP, HEIC rotated/EXIF, low-RAM pinch 1x–5x |
 | GD-05 P1 | GALLERY_ONLY | full selected catalog lexical + optional foreground image labels | target image at index 1,501, cancel/resume, 5k-asset CPU/battery |
