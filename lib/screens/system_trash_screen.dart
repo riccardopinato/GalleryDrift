@@ -121,12 +121,12 @@ class _SystemTrashScreenState extends State<SystemTrashScreen> {
                 if (_selected.length == _items.length) {
                   _selected.clear();
                 } else {
-                  _selected.addAll(_items.map((e) => e.uri));
+                  _selected.addAll(_items.take(100).map((e) => e.uri));
                 }
               }),
             child: Text(GalleryLocale.t('selectAll'))),
           const Spacer(),
-          Text('${_items.length} · ${_selected.length}',
+          Text('${_items.length} · ${_selected.length}/100',
             style: const TextStyle(color:Colors.white70)),
           IconButton(tooltip:GalleryLocale.t('retry'),
             onPressed:_mutating?_noop:_reload,
@@ -148,7 +148,9 @@ class _SystemTrashScreenState extends State<SystemTrashScreen> {
                 key: ValueKey(item.uri),
                 value:_selected.contains(item.uri),
                 onChanged:_mutating ? null : (checked)=>setState((){
-                  if(checked == true) { _selected.add(item.uri); }
+                  if(checked == true && _selected.length < 100) {
+                    _selected.add(item.uri);
+                  }
                   else { _selected.remove(item.uri); }
                 }),
                 secondary: _TrashThumbnail(item:item),

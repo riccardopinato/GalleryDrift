@@ -73,7 +73,7 @@ abstract final class PhotoSearch {
     'baum': ['tree'],
     'cibo': ['food'], 'nourriture': ['food'], 'comida': ['food'],
     'essen': ['food'],
-    'animale': ['animal'], 'animal': ['animal'], 'tier': ['animal'],
+    'animal': ['animal','mammal','pet','cat','dog'], 'tier': ['animal'],
     'uccello': ['bird'], 'oiseau': ['bird'], 'pajaro': ['bird'],
     'vogel': ['bird'],
     'bicicletta': ['bicycle','bike'], 'bici': ['bike','bicycle'],
