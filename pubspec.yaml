@@ -1,7 +1,7 @@
 name: gallerydrift
 description: Infinite canvas for the user's explicitly selected local photo albums.
 publish_to: none
-version: 0.3.3+7
+version: 0.3.4+8
 environment:
   sdk: '>=3.5.0 <4.0.0'
 dependencies:

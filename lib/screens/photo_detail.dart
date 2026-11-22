@@ -96,7 +96,7 @@ class _PhotoDetailState extends State<PhotoDetail> {
     _requests.removeWhere((key, _) => (key - index).abs() > 3);
     try {
       final asset = await _assetAt(index);
-      if (!mounted || index != _index) return;
+      if (!mounted || index != _index || _stale) return;
       setState(() => _current = asset);
     } catch (_) {
       if (mounted && index == _index) {

@@ -7,8 +7,12 @@ Canonical sibling:
 ArtDrift-Infinite-Art-Gallery@586b3009308d7b09883f63a4dd80cdae208712c5.
 Drift Core remains pinned and unchanged in the Gallery consumer.
 
-**State of this document: implementation PR, NOT device-certified and NOT
-Play-ready.** Every check below needs exact-head CI proof before merge.
+**State of this document: 0.3.4+8 implementation PR, NOT device-certified
+and NOT Play-ready.** Every check below needs exact-head CI proof before merge.
+The MediaStore scan enumerates full folder metadata because change events do
+not reliably identify altered assets; only changed/removed IDs invalidate
+local image caches and derived visual labels. This is incremental reconciliation,
+not a falsely claimed platform-level delta query.
 
 | ID | Owner | Intervention | Mandatory evidence |
 |---|---|---|---|

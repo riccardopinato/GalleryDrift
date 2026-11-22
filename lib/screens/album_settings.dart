@@ -89,6 +89,10 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
             },
             icon: const Icon(Icons.collections_outlined),
             label: Text(GalleryLocale.t('limitedAccess'))),
+          if (_error != null) TextButton.icon(
+            onPressed: () async => PhotoManager.openSetting(),
+            icon: const Icon(Icons.settings_outlined),
+            label: Text(GalleryLocale.t('openSystemSettings'))),
           if (_error != null) Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(_error!, style: const TextStyle(color: Colors.orangeAccent))),

@@ -165,6 +165,13 @@ class _GalleryHomeState extends State<GalleryHome> {
       _favorites=next;
       _assets=_assets.where((asset)=>!ids.contains(asset.id)).toList();
     });
+    // Native change signals can be delayed on some devices. Reconcile even
+    // when no callback arrives, after any open photo viewer has been closed.
+    if (_viewerOpen) {
+      _pendingMediaChange=true;
+    } else {
+      _scheduleRefresh();
+    }
   }
 
   Future<void> _openBatch() async =>

@@ -26,6 +26,7 @@ abstract final class GalleryLocale {
 
   static const _texts = <String, Map<String,String>>{
     'it': {
+      'openSystemSettings':"Apri impostazioni Android",
       'multiSelect':"Seleziona foto",
       'clearSelection':"Deseleziona",
       'batchConfirm':"Spostare nel cestino del dispositivo le foto selezionate? Totale:",
@@ -70,6 +71,7 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Scorri a sinistra o a destra per esplorare questa cartella',
       'albumReadError':'Impossibile leggere tutte le foto della cartella. Puoi comunque visualizzare quella aperta.'},
     'en': {
+      'openSystemSettings':"Open Android settings",
       'multiSelect':"Select photos",
       'clearSelection':"Clear selection",
       'batchConfirm':"Move selected photos to the device trash? Total:",
@@ -113,6 +115,7 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Swipe left or right to browse this album',
       'albumReadError':'Could not load the album count. The opened photo is still available.'},
     'fr': {
+      'openSystemSettings':"Ouvrir les paramètres Android",
       'multiSelect':"Sélectionner des photos",
       'clearSelection':"Effacer la sélection",
       'batchConfirm':"Déplacer les photos sélectionnées à la corbeille ? Total :",
@@ -155,6 +158,7 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Balayez pour parcourir cet album',
       'albumReadError':'Impossible de lire toutes les photos du dossier. La photo ouverte reste disponible.'},
     'es': {
+      'openSystemSettings':"Abrir ajustes de Android",
       'multiSelect':"Seleccionar fotos",
       'clearSelection':"Anular selección",
       'batchConfirm':"¿Mover las fotos elegidas a la papelera? Total:",
@@ -197,6 +201,7 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Desliza para explorar esta carpeta',
       'albumReadError':'No se pudo leer el álbum completo. La foto abierta sigue disponible.'},
     'de': {
+      'openSystemSettings':"Android-Einstellungen öffnen",
       'multiSelect':"Fotos auswählen",
       'clearSelection':"Auswahl löschen",
       'batchConfirm':"Ausgewählte Fotos in den Papierkorb verschieben? Anzahl:",
@@ -239,6 +244,7 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Wische nach links oder rechts, um das Album zu durchsuchen',
       'albumReadError':'Das Album konnte nicht vollständig gelesen werden. Das geöffnete Foto ist verfügbar.'},
     'pt': {
+      'openSystemSettings':"Abrir definições Android",
       'multiSelect':"Selecionar fotos",
       'clearSelection':"Limpar seleção",
       'batchConfirm':"Mover as fotos selecionadas para o lixo? Total:",
