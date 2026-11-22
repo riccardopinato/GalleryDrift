@@ -4,6 +4,7 @@ import '../localization.dart';
 import '../services/local_gallery.dart';
 import 'preferences_backup_sheet.dart';
 import 'system_trash_screen.dart';
+import '../search/background_indexer.dart';
 
 Future<bool?> showAlbumSettings(BuildContext context, LocalGallery source,
     Set<String> current) => showModalBottomSheet<bool>(
@@ -24,6 +25,7 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   List<AssetPathEntity> _albums = [];
   bool _busy = false;
   bool _limited = false;
+  bool _autoTags=true;
   String? _error;
 
   @override
@@ -35,11 +37,12 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   Future<void> _readAccessible() async {
     setState(() => _busy = true);
     try {
+      final auto=await BackgroundIndexer.enabled();
       final state = await widget.source.permission();
       final albums = state.hasAccess ? await widget.source.albums() :
           <AssetPathEntity>[];
       if (!mounted) return;
-      setState(() { _albums = albums; _limited = state.isLimited; _error = state.hasAccess ? null :
+      setState(() { _albums = albums; _autoTags=auto; _limited = state.isLimited; _error = state.hasAccess ? null :
         GalleryLocale.t('denied'); _busy = false; });
     } catch (error) {
       if (!mounted) return;
@@ -136,6 +139,17 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
                 if (mounted) setState((){});
               }),
           ]),
+          SwitchListTile(
+            dense:true,
+            contentPadding:EdgeInsets.zero,
+            title:Text(GalleryLocale.t('automaticTags')),
+            subtitle:Text(GalleryLocale.t('automaticTagsDetails'),
+              style:const TextStyle(fontSize:11)),
+            value:_autoTags,
+            onChanged:(enabled) async {
+              await BackgroundIndexer.setEnabled(enabled);
+              if(mounted)setState(()=>_autoTags=enabled);
+            }),
           TextButton.icon(
             icon: const Icon(Icons.delete_sweep_outlined),
             onPressed: () async {

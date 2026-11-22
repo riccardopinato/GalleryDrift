@@ -8,6 +8,7 @@ import 'localization.dart';
 import 'services/local_gallery.dart';
 import 'search/combined_search.dart';
 import 'search/visual_index.dart';
+import 'search/background_indexer.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
 import 'screens/batch_selection.dart';
@@ -19,6 +20,7 @@ import 'ui/gallery_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GalleryLocale.initialize();
+  await BackgroundIndexer.initialize();
   PaintingBinding.instance.imageCache.maximumSize = 110;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 48 * 1024 * 1024;
   runApp(const GalleryDriftApp());
@@ -132,6 +134,9 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
         GalleryThumbnailCache.instance.evict(id);
       }
       _visual.forgetAll(delta.invalidatedIds);
+      if(selected.isNotEmpty && (delta.changed || generation==1)) {
+        unawaited(BackgroundIndexer.schedule());
+      }
       // Preserve favorites for temporarily inaccessible media. Do not
       // silently delete user preference IDs when Android narrows access.
       if(!mounted || generation!=_refreshGeneration)return;
@@ -218,6 +223,7 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
   }
 
   Future<void> _search() async {
+    unawaited(_visual.refresh());
     final selected=await showSearch<AssetEntity?>(
       context:context,delegate:_LocalSearch(
         _assets, _source.albumNameFor, _visual));
@@ -318,7 +324,13 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
 }
 
 class _LocalSearch extends SearchDelegate<AssetEntity?> {
-  _LocalSearch(this.assets, this.albumName, this.indexer);
+  _LocalSearch(this.assets,this.albumName,this.indexer) {
+    _poll=Timer.periodic(const Duration(seconds:4),
+      (_)=>unawaited(indexer.refresh()));
+  }
+
+  Timer? _poll;
+  @override void dispose(){_poll?.cancel();super.dispose();}
 
   final List<AssetEntity> assets;
   final String Function(String) albumName;
@@ -352,21 +364,22 @@ class _LocalSearch extends SearchDelegate<AssetEntity?> {
               crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(GalleryLocale.t('visualSearch'),
                   style: Theme.of(context).textTheme.titleSmall),
-                Text(indexer.isRunning
-                  ? '${GalleryLocale.t('indexing')}: ${indexer.progress} / ${indexer.total}'
-                  : '${GalleryLocale.t('indexed')}: ${indexer.cachedCount} / ${assets.length}',
-                  style: const TextStyle(fontSize: 11, color: Colors.white60)),
+                Text('${GalleryLocale.t('tagged')}: ${indexer.taggedCount}'
+                  ' · ${GalleryLocale.t('unlabeled')}: ${indexer.unlabeledCount}'
+                  ' · ${GalleryLocale.t('failed')}: ${indexer.failedCount}'
+                  ' / ${assets.where((a)=>a.type==AssetType.image).length}',
+                  style:const TextStyle(fontSize:11,color:Colors.white60)),
               ])),
-            if (indexer.isRunning) TextButton.icon(
-              onPressed: indexer.cancel, icon: const Icon(Icons.stop),
-              label: Text(GalleryLocale.t('stop')))
-            else TextButton.icon(
-              onPressed: () => indexer.index(assets),
+            TextButton.icon(
+              onPressed: () => BackgroundIndexer.schedule(),
               icon: const Icon(Icons.auto_awesome_outlined),
               label: Text(GalleryLocale.t('analyzePhotos'))),
             IconButton(tooltip: GalleryLocale.t('clearVisualIndex'),
-              onPressed: indexer.isRunning ? null : indexer.clear,
-              icon: const Icon(Icons.delete_sweep_outlined)),
+              onPressed: indexer.isRunning ? null : () async {
+                await indexer.retryFailures();
+                await BackgroundIndexer.schedule();
+              },
+              icon: const Icon(Icons.refresh_rounded)),
           ])),
         if (indexer.isRunning && indexer.total > 0) LinearProgressIndicator(
           value: indexer.progress / indexer.total),

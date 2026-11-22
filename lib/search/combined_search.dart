@@ -23,8 +23,29 @@ abstract final class PhotoSearch {
   /// common requests work in six interface languages. It is NOT a universal
   /// translator or a free-vocabulary image-text embedding model.
   static const Map<String, List<String>> aliases = {
-    'gatto': ['cat'], 'gatti': ['cat'], 'chat': ['cat'], 'katze': ['cat'],
-    'gato': ['cat'], 'cane': ['dog'], 'cani': ['dog'], 'chien': ['dog'],
+    'gatto': ['cat','kitten','feline'],
+    'gatti': ['cat','kitten','feline'],
+    'gattino': ['cat','kitten','feline'],
+    'gattini': ['cat','kitten','feline'],
+    'felino': ['cat','kitten','feline'],
+    'felini': ['cat','kitten','feline'],
+    'chat': ['cat','kitten','feline'],
+    'katze': ['cat','kitten','feline'],
+    'kater': ['cat','kitten','feline'],
+    'gato': ['cat','kitten','feline'],
+    'gatos': ['cat','kitten','feline'],
+    'felin': ['cat','kitten','feline'],
+    'cane': ['dog','puppy','canine'],
+    'cani': ['dog','puppy','canine'],
+    'cucciolo': ['puppy','kitten'],
+    'animale': ['animal','mammal','cat','dog','pet'],
+    'animali': ['animal','mammal','cat','dog','pet'],
+    'domestico': ['pet','cat','dog'],
+    'domestici': ['pet','cat','dog'],
+    'pet': ['pet','cat','dog'],
+    'feline': ['cat','kitten','feline'],
+    'kitten': ['cat','kitten','feline'],
+    'chien': ['dog','puppy','canine'],
     'perro': ['dog'], 'hund': ['dog'], 'cao': ['dog'],
     'luna': ['moon'], 'lune': ['moon'], 'mond': ['moon'], 'lua': ['moon'],
     'casa': ['house','home'], 'maison': ['house','home'],
@@ -78,10 +99,22 @@ abstract final class PhotoSearch {
   static List<PhotoSearchHit> find(
     String query, List<PhotoSearchDocument> candidates,
     {int? limit = 100}) {
-    final words = normalize(query).split(' ').where((x) => x.isNotEmpty).toList();
+    final normalized=normalize(query);
+    final searchText=const {
+      'animale domestico':'pet',
+      'animali domestici':'pet',
+      'animaux domestiques':'pet',
+      'mascota':'pet',
+      'haustier':'pet',
+      'animal de estimacao':'pet',
+      'gatto domestico':'gatto',
+      'gatti domestici':'gatti',
+    }[normalized] ?? normalized;
+    final words = searchText.split(' ')
+      .where((x)=>x.isNotEmpty).toList();
     if (words.isEmpty) return const [];
     final results = <PhotoSearchHit>[];
-    final queryPhrase = normalize(query);
+    final queryPhrase = searchText;
     for (final doc in candidates) {
       final name = normalize(doc.filename);
       final folder = normalize(doc.album);

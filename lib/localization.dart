@@ -26,6 +26,11 @@ abstract final class GalleryLocale {
 
   static const _texts = <String, Map<String,String>>{
     'it': {
+      'tagged': "Etichettate",
+      'unlabeled': "Senza etichette",
+      'failed': "Errori",
+      'automaticTags': "Analisi automatica delle immagini",
+      'automaticTagsDetails': "Solo cartelle scelte, sul telefono. Continua a piccoli lotti quando Android lo permette, con batteria sufficiente. Nessun invio delle foto.",
       'trashReview': "Cestino - Elimina definitivamente",
       'deleteForever': "Elimina definitivamente",
       'restoreTrash': "Ripristina",
@@ -83,6 +88,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Scorri a sinistra o a destra per esplorare questa cartella',
       'albumReadError':'Impossibile leggere tutte le foto della cartella. Puoi comunque visualizzare quella aperta.'},
     'en': {
+      'tagged': "Tagged",
+      'unlabeled': "No labels",
+      'failed': "Errors",
+      'automaticTags': "Automatic image analysis",
+      'automaticTagsDetails': "Selected folders only; on-device. Runs in short batches when Android allows and battery is sufficient. No photo upload.",
       'trashReview': "Trash - Permanently delete",
       'deleteForever': "Delete permanently",
       'restoreTrash': "Restore",
@@ -139,6 +149,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Swipe left or right to browse this album',
       'albumReadError':'Could not load the album count. The opened photo is still available.'},
     'fr': {
+      'tagged': "Étiquetées",
+      'unlabeled': "Sans étiquette",
+      'failed': "Erreurs",
+      'automaticTags': "Analyse automatique",
+      'automaticTagsDetails': "Dossiers choisis uniquement, sur l’appareil, en petits lots selon Android.",
       'trashReview': "Corbeille - Suppression définitive",
       'deleteForever': "Supprimer définitivement",
       'restoreTrash': "Restaurer",
@@ -194,6 +209,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Balayez pour parcourir cet album',
       'albumReadError':'Impossible de lire toutes les photos du dossier. La photo ouverte reste disponible.'},
     'es': {
+      'tagged': "Etiquetadas",
+      'unlabeled': "Sin etiquetas",
+      'failed': "Errores",
+      'automaticTags': "Análisis automático",
+      'automaticTagsDetails': "Solo carpetas elegidas, en el dispositivo y por lotes cuando Android lo permita.",
       'trashReview': "Papelera - Eliminar definitivamente",
       'deleteForever': "Eliminar definitivamente",
       'restoreTrash': "Restaurar",
@@ -249,6 +269,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Desliza para explorar esta carpeta',
       'albumReadError':'No se pudo leer el álbum completo. La foto abierta sigue disponible.'},
     'de': {
+      'tagged': "Markiert",
+      'unlabeled': "Ohne Labels",
+      'failed': "Fehler",
+      'automaticTags': "Automatische Bildanalyse",
+      'automaticTagsDetails': "Nur gewählte Ordner, lokal und in kleinen Schritten, wenn Android es erlaubt.",
       'trashReview': "Papierkorb - Endgültig löschen",
       'deleteForever': "Endgültig löschen",
       'restoreTrash': "Wiederherstellen",
@@ -304,6 +329,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Wische nach links oder rechts, um das Album zu durchsuchen',
       'albumReadError':'Das Album konnte nicht vollständig gelesen werden. Das geöffnete Foto ist verfügbar.'},
     'pt': {
+      'tagged': "Etiquetadas",
+      'unlabeled': "Sem etiquetas",
+      'failed': "Erros",
+      'automaticTags': "Análise automática",
+      'automaticTagsDetails': "Só pastas escolhidas, local e em lotes, quando Android permitir.",
       'trashReview': "Lixo - Eliminar definitivamente",
       'deleteForever': "Eliminar definitivamente",
       'restoreTrash': "Restaurar",

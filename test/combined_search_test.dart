@@ -17,6 +17,23 @@ void main() {
       labels:['Skyscraper']),
   ];
 
+  test('cat synonyms, feline, kitten and generic pets', () {
+    const semantic=[
+      PhotoSearchDocument(id:'cat',filename:'IMG_1.jpg',
+        album:'Summer',labels:['Cat','Pet']),
+      PhotoSearchDocument(id:'kitten',filename:'IMG_2.jpg',
+        album:'Summer',labels:['Kitten']),
+      PhotoSearchDocument(id:'dog',filename:'IMG_3.jpg',
+        album:'Summer',labels:['Dog','Pet']),
+    ];
+    expect(PhotoSearch.find('gatto',semantic).map((e)=>e.document.id).toSet(),
+      {'cat','kitten'});
+    expect(PhotoSearch.find('felino',semantic).map((e)=>e.document.id).toSet(),
+      {'cat','kitten'});
+    expect(PhotoSearch.find('animale domestico',semantic).length,3);
+    expect(PhotoSearch.find('gatto',semantic).any((e)=>e.document.id=='dog'),false);
+  });
+
   test('cat, moon and camper can be found from labels and filenames', () {
     expect(PhotoSearch.find('gatto',docs).map((x)=>x.document.id),['1']);
     expect(PhotoSearch.find('luna',docs).map((x)=>x.document.id),['5','2']);
