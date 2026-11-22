@@ -10,6 +10,7 @@ import 'search/combined_search.dart';
 import 'search/visual_index.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
+import 'screens/batch_selection.dart';
 import 'widgets/local_photo.dart';
 import 'services/gallery_thumbnail_cache.dart';
 
@@ -131,22 +132,27 @@ class _GalleryHomeState extends State<GalleryHome> {
     if(mounted)setState(()=>_favorites=next);
   }
 
-  Future<void> _onTrashed(AssetEntity photo) async {
-    _source.applyTrashed(photo.id);
-    GalleryThumbnailCache.instance.evict(photo.id);
-    _visual.forget(photo.id);
-    // An asset removed in the viewer is also removed from the canvas,
-    // search results, and the app-local favorites.
-    final next = {..._favorites}..remove(photo.id);
-    if (next.length != _favorites.length) {
-      await _source.saveFavorites(next);
+  Future<void> _onTrashed(AssetEntity photo) => _onTrashedBatch([photo]);
+
+  Future<void> _onTrashedBatch(List<AssetEntity> removed) async {
+    if (removed.isEmpty) return;
+    final ids=removed.map((photo)=>photo.id).toSet();
+    for (final photo in removed) {
+      _source.applyTrashed(photo.id);
+      GalleryThumbnailCache.instance.evict(photo.id);
     }
-    if (!mounted) return;
+    _visual.forgetAll(ids);
+    final next={..._favorites}..removeAll(ids);
+    if(next.length!=_favorites.length) await _source.saveFavorites(next);
+    if(!mounted)return;
     setState(() {
-      _favorites = next;
-      _assets = _assets.where((a) => a.id != photo.id).toList();
+      _favorites=next;
+      _assets=_assets.where((asset)=>!ids.contains(asset.id)).toList();
     });
   }
+
+  Future<void> _openBatch() async =>
+    showBatchSelection(context,List<AssetEntity>.of(_assets),_onTrashedBatch);
 
   Future<void> _openPhoto(AssetEntity photo) async {
     if (_viewerOpen) return;
@@ -230,6 +236,18 @@ class _GalleryHomeState extends State<GalleryHome> {
           Text('$_indexed / $_total',style:const TextStyle(
             fontSize:11,color:Colors.white70)),
         ]))),
+      if (!_busy && _error==null && _assets.isNotEmpty)
+        Positioned(right:16,bottom:14,
+          child:SafeArea(top:false,
+            child:Tooltip(
+              message:GalleryLocale.t('multiSelect'),
+              child:IconButton.filledTonal(
+                key:const Key('gallerydrift-batch-select'),
+                onPressed:_openBatch,
+                icon:const Icon(Icons.checklist_rounded),
+                style:IconButton.styleFrom(
+                  backgroundColor:const Color(0xD3232530),
+                  foregroundColor:const Color(0xFFE5C8A5))))),
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;

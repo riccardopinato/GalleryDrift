@@ -144,10 +144,17 @@ class VisualIndex extends ChangeNotifier {
     _emit();
   }
 
-  void forget(String id) {
-    _entries.remove(id);
-    _emit();
-    unawaited(_persist());
+  void forget(String id) => forgetAll([id]);
+
+  void forgetAll(Iterable<String> ids) {
+    var changed=false;
+    for (final id in ids) {
+      if (_entries.remove(id) != null) changed=true;
+    }
+    if (changed) {
+      _emit();
+      unawaited(_persist());
+    }
   }
 
   @override

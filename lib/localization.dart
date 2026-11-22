@@ -26,6 +26,11 @@ abstract final class GalleryLocale {
 
   static const _texts = <String, Map<String,String>>{
     'it': {
+      'multiSelect':"Seleziona foto",
+      'clearSelection':"Deseleziona",
+      'batchConfirm':"Spostare nel cestino del dispositivo le foto selezionate? Totale:",
+      'trashedCount':"Spostate nel cestino",
+
       'backupPreferences':"Backup e ripristino",
       'backupDetails':"Copia un backup JSON di cartelle, preferiti, lingua e posizione del canvas. Non comprende immagini o video. Conservalo in un luogo privato.",
       'copyBackup':"Copia backup",
@@ -65,6 +70,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Scorri a sinistra o a destra per esplorare questa cartella',
       'albumReadError':'Impossibile leggere tutte le foto della cartella. Puoi comunque visualizzare quella aperta.'},
     'en': {
+      'multiSelect':"Select photos",
+      'clearSelection':"Clear selection",
+      'batchConfirm':"Move selected photos to the device trash? Total:",
+      'trashedCount':"Moved to trash",
+
       'backupPreferences':"Backup and restore",
       'backupDetails':"Copy a JSON backup of folders, favorites, language and canvas camera. No photo or video bytes are included. Keep it private.",
       'copyBackup':"Copy backup",
@@ -103,6 +113,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Swipe left or right to browse this album',
       'albumReadError':'Could not load the album count. The opened photo is still available.'},
     'fr': {
+      'multiSelect':"Sélectionner des photos",
+      'clearSelection':"Effacer la sélection",
+      'batchConfirm':"Déplacer les photos sélectionnées à la corbeille ? Total :",
+      'trashedCount':"Déplacées à la corbeille",
+
       'backupPreferences':"Sauvegarde et restauration",
       'backupDetails':"Copiez le JSON des dossiers, favoris, langue et position. Aucune photo ni vidéo. Gardez-le privé.",
       'copyBackup':"Copier la sauvegarde",
@@ -140,6 +155,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Balayez pour parcourir cet album',
       'albumReadError':'Impossible de lire toutes les photos du dossier. La photo ouverte reste disponible.'},
     'es': {
+      'multiSelect':"Seleccionar fotos",
+      'clearSelection':"Anular selección",
+      'batchConfirm':"¿Mover las fotos elegidas a la papelera? Total:",
+      'trashedCount':"Movidas a la papelera",
+
       'backupPreferences':"Copia y restauración",
       'backupDetails':"Copia el JSON de carpetas, favoritos, idioma y posición. No incluye fotos ni vídeos. Guárdalo en privado.",
       'copyBackup':"Copiar copia",
@@ -177,6 +197,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Desliza para explorar esta carpeta',
       'albumReadError':'No se pudo leer el álbum completo. La foto abierta sigue disponible.'},
     'de': {
+      'multiSelect':"Fotos auswählen",
+      'clearSelection':"Auswahl löschen",
+      'batchConfirm':"Ausgewählte Fotos in den Papierkorb verschieben? Anzahl:",
+      'trashedCount':"In Papierkorb verschoben",
+
       'backupPreferences':"Sichern und wiederherstellen",
       'backupDetails':"JSON-Backup für Ordner, Favoriten, Sprache und Position. Ohne Mediendateien. Privat aufbewahren.",
       'copyBackup':"Backup kopieren",
@@ -214,6 +239,11 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Wische nach links oder rechts, um das Album zu durchsuchen',
       'albumReadError':'Das Album konnte nicht vollständig gelesen werden. Das geöffnete Foto ist verfügbar.'},
     'pt': {
+      'multiSelect':"Selecionar fotos",
+      'clearSelection':"Limpar seleção",
+      'batchConfirm':"Mover as fotos selecionadas para o lixo? Total:",
+      'trashedCount':"Movidas para o lixo",
+
       'backupPreferences':"Cópia e restauro",
       'backupDetails':"Copia JSON das pastas, favoritos, idioma e posição. Sem fotos ou vídeos. Guarda em privado.",
       'copyBackup':"Copiar cópia",
