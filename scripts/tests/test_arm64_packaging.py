@@ -1,3 +1,4 @@
+"""Regression tests for optimized ARM64 APK packaging and size policy."""
 import sys
 import tempfile
 import unittest
@@ -5,21 +6,7 @@ from pathlib import Path
 from zipfile import ZipFile, ZIP_STORED
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from enforce_arm64_gradle import configure_gradle, ARM64_BLOCK
 from verify_arm64_apk import verify_apk, REQUIRED_NATIVE
-
-TEMPLATE = """
-plugins {
-    id("com.android.application")
-}
-android {
-    namespace = "com.riccardopinato.gallerydrift"
-    defaultConfig {
-        applicationId = "com.riccardopinato.gallerydrift"
-        minSdk = flutter.minSdkVersion
-    }
-}
-"""
 
 class Arm64PackagingTests(unittest.TestCase):
     def test_all_android_workflows_use_split_per_abi(self):
@@ -29,24 +16,10 @@ class Arm64PackagingTests(unittest.TestCase):
             self.assertIn("flutter build apk --release --split-per-abi --target-platform android-arm64", workflow)
             self.assertIn("build/app/outputs/flutter-apk/app-arm64-v8a-release.apk", workflow)
             self.assertNotIn("build/app/outputs/flutter-apk/app-release.apk", workflow)
-
-    def test_gradle_arm64_abi_filter_injection_is_idempotent(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / "build.gradle.kts"
-            path.write_text(TEMPLATE)
-            self.assertTrue(configure_gradle(path))
-            self.assertIn(ARM64_BLOCK, path.read_text())
-            self.assertFalse(configure_gradle(path))
-
-    def test_gradle_rejects_conflicting_filters(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / "build.gradle.kts"
-            path.write_text(TEMPLATE.replace('defaultConfig {', 'defaultConfig {\n        ndk { abiFilters.add("x86_64") }'))
-            with self.assertRaisesRegex(ValueError, "ARM64_ABI_ALREADY_DEFINED"):
-                configure_gradle(path)
+            self.assertNotIn("enforce_arm64_gradle.py", workflow)
 
     def make_apk(self, folder, foreign=False, missing=False):
-        path = Path(folder) / "app-release.apk"
+        path = Path(folder) / "app-arm64-v8a-release.apk"
         with ZipFile(path, "w", compression=ZIP_STORED) as archive:
             for name in REQUIRED_NATIVE:
                 if missing and name.endswith("/libflutter.so"):

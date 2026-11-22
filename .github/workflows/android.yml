@@ -79,8 +79,6 @@ jobs:
         run: rm -f test/widget_test.dart
       - name: Patch photo permissions
         run: python3 scripts/patch_android.py
-      - name: Enforce ARM64 native ABI packaging
-        run: python3 scripts/enforce_arm64_gradle.py
       - name: Render product launcher icon
         run: |
           python3 -m pip install --disable-pip-version-check "CairoSVG==2.7.1"

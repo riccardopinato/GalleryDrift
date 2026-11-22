@@ -46,7 +46,6 @@ jobs:
           flutter create --project-name gallerydrift --org com.riccardopinato --platforms=android .
           rm -f test/widget_test.dart
           python3 scripts/patch_android.py
-          python3 scripts/enforce_arm64_gradle.py
           python3 -m pip install --disable-pip-version-check "CairoSVG==2.7.1"
           python3 scripts/install_brand_icon.py
       - name: Restore private keystore temporarily
