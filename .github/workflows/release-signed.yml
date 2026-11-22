@@ -31,6 +31,8 @@ jobs:
           for key in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD ANDROID_CERT_SHA256; do
             if [[ -z "${!key:-}" ]]; then echo "::error::Missing signing input: $key"; exit 1; fi
           done
+      - name: Verify APK-signature parser regression cases
+        run: python3 -m unittest discover -s scripts/tests -p 'test_verify_release_apk.py'
       - name: Prepare Android shell
         run: |
           flutter create --project-name gallerydrift --org com.riccardopinato --platforms=android .
@@ -88,12 +90,11 @@ jobs:
           APK=build/app/outputs/flutter-apk/app-release.apk
           test -s "$APK"
           SDK_BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
-          "$SDK_BUILD_TOOLS/apksigner" verify --print-certs "$APK" > build/apk-signer-report.txt
-          actual="$(sed -n 's/.*Signer #1 certificate SHA-256 digest: //p' build/apk-signer-report.txt | head -1 | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
-          expected="$(printf '%s' "$ANDROID_CERT_SHA256" | tr -d ':[:space:]' | tr '[:upper:]' '[:lower:]')"
-          if [[ -z "$actual" || "$actual" != "$expected" ]]; then
-            echo "::error::Signing fingerprint mismatch"; exit 1
-          fi
+          python3 scripts/verify_release_apk.py \\
+            --apk "$APK" \\
+            --apksigner "$SDK_BUILD_TOOLS/apksigner" \\
+            --expected "$ANDROID_CERT_SHA256" \\
+            --report build/apk-signer-report.txt
           sha256sum "$APK" > build/release-sha256.txt
           echo "SIGNING_IDENTITY_VERIFIED"
       - uses: actions/upload-artifact@v4
