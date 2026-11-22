@@ -64,3 +64,13 @@ benchmarked on physical hardware.**
   download, explicit indexing, per-photo cosine ranking, progress/diagnostics.
 - The model is downloaded only after research-only acknowledgement; no weights
   distributed in GitHub or in the APK.
+
+## Optional image captioning — NOT approved for implementation
+SmolVLM2-256M (Apache-2.0) via official ggml-org GGUF:
+- Q8 GGUF **175 MB** + required mmproj Q8 **104 MB** = **279 MB**.
+- F16 GGUF **328 MB** + required mmproj F16 **190 MB** = **518 MB**.
+- These weights are not the APK or peak RAM requirements.
+- Produces natural-language descriptions, unlike MobileCLIP2 image/text
+  retrieval; possible hallucinations, slower first-pass indexing, optional
+  storage/download, and a separate llama.cpp ARM64 runtime needed.
+- Keep OFF until explicitly approved and physical resource profile passes.

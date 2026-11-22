@@ -13,6 +13,10 @@ if "READ_MEDIA_IMAGES" not in text:
 text = text.replace('android:label="gallerydrift"', 'android:label="Gallery Drift AI Lab"')
 if "android.permission.INTERNET" not in text:
     text = text.replace("<application", '    <uses-permission android:name="android.permission.INTERNET" />\n    <application', 1)
+# Relative activity names can resolve against the applicationId on some
+# Android builds. Use the canonical class package explicitly for the Lab APK.
+text = text.replace('android:name=".MainActivity"',
+    'android:name="com.riccardopinato.gallerydrift.MainActivity"')
 manifest.write_text(text, encoding="utf-8")
 package_dir = Path("android/app/src/main/kotlin/com/riccardopinato/gallerydrift")
 package_dir.mkdir(parents=True, exist_ok=True)
