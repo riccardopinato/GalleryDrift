@@ -42,7 +42,7 @@ abstract final class PhotoSearch {
     'animali': ['animal','mammal','cat','dog','pet'],
     'domestico': ['pet','cat','dog'],
     'domestici': ['pet','cat','dog'],
-    'pet': ['pet','cat','dog'],
+    'pet': ['pet','cat','kitten','feline','dog','puppy','canine'],
     'feline': ['cat','kitten','feline'],
     'kitten': ['cat','kitten','feline'],
     'chien': ['dog','puppy','canine'],
