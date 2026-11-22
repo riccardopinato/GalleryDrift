@@ -22,6 +22,14 @@ android {
 """
 
 class Arm64PackagingTests(unittest.TestCase):
+    def test_all_android_workflows_use_split_per_abi(self):
+        root = Path(__file__).resolve().parents[2]
+        for filename in ("release-signed.yml", "android.yml"):
+            workflow = (root / ".github/workflows" / filename).read_text(encoding="utf-8")
+            self.assertIn("flutter build apk --release --split-per-abi --target-platform android-arm64", workflow)
+            self.assertIn("build/app/outputs/flutter-apk/app-arm64-v8a-release.apk", workflow)
+            self.assertNotIn("build/app/outputs/flutter-apk/app-release.apk", workflow)
+
     def test_gradle_arm64_abi_filter_injection_is_idempotent(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "build.gradle.kts"
