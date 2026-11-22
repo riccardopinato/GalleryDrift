@@ -20,6 +20,7 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   late final Set<String> _selected = {...widget.selected};
   List<AssetPathEntity> _albums = [];
   bool _busy = false;
+  bool _limited = false;
   String? _error;
 
   @override
@@ -35,7 +36,7 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
       final albums = state.hasAccess ? await widget.source.albums() :
           <AssetPathEntity>[];
       if (!mounted) return;
-      setState(() { _albums = albums; _error = state.hasAccess ? null :
+      setState(() { _albums = albums; _limited = state.isLimited; _error = state.hasAccess ? null :
         GalleryLocale.t('denied'); _busy = false; });
     } catch (error) {
       if (!mounted) return;
@@ -79,10 +80,21 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
           OutlinedButton.icon(onPressed: _busy ? null : _request,
             icon: const Icon(Icons.photo_library_outlined),
             label: Text(GalleryLocale.t('grant'))),
+          if (_limited) TextButton.icon(
+            onPressed: _busy ? null : () async {
+              await PhotoManager.presentLimited(type: RequestType.common);
+              if (mounted) await _readAccessible();
+            },
+            icon: const Icon(Icons.collections_outlined),
+            label: Text(GalleryLocale.t('limitedAccess'))),
           if (_error != null) Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(_error!, style: const TextStyle(color: Colors.orangeAccent))),
           if (_busy) const LinearProgressIndicator(),
+          if (!_busy && _albums.isNotEmpty) Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Text('${_albums.length} · ${_selected.length}',
+              style: const TextStyle(fontSize: 12, color: Colors.white70))),
           Expanded(child: _albums.isEmpty ?
             Center(child: Text(GalleryLocale.t('none'))) :
             ListView.builder(

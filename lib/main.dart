@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/painting.dart';
 import 'package:drift_core/drift_core.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -44,28 +46,72 @@ class _GalleryHomeState extends State<GalleryHome> {
   Set<String> _favorites = {};
   List<AssetEntity> _assets=[];
   bool _busy=true, _favoritesOnly=false;
+  bool _viewerOpen=false, _pendingMediaChange=false;
+  int _refreshGeneration=0, _indexed=0, _total=0;
   String? _error;
+  Timer? _changeTimer;
+  late final ValueChanged<MethodCall> _mediaCallback;
+  final ValueNotifier<int> _mediaVersion=ValueNotifier(0);
 
-  @override void initState(){super.initState();_visual.load();_refresh();}
+  @override void initState(){
+    super.initState();
+    _visual.load();
+    _mediaCallback = (_) {
+      if (!mounted) return;
+      _mediaVersion.value++;
+      if (_viewerOpen) {
+        _pendingMediaChange = true;
+      } else {
+        _scheduleRefresh();
+      }
+    };
+    PhotoManager.addChangeCallback(_mediaCallback);
+    PhotoManager.startChangeNotify().catchError((Object _) {});
+    _refresh();
+  }
 
-  @override void dispose(){_visual.dispose();super.dispose();}
+  void _scheduleRefresh() {
+    _changeTimer?.cancel();
+    _changeTimer = Timer(const Duration(milliseconds: 600), () {
+      if (mounted) _refresh();
+    });
+  }
+
+  @override void dispose(){
+    _changeTimer?.cancel();
+    PhotoManager.removeChangeCallback(_mediaCallback);
+    PhotoManager.stopChangeNotify().catchError((Object _) {});
+    _mediaVersion.dispose();
+    _visual.dispose();
+    super.dispose();
+  }
 
   Future<void> _refresh() async {
-    setState(() {_busy=true;_error=null;});
+    final generation=++_refreshGeneration;
+    if (!mounted) return;
+    setState(() {_busy=true;_error=null;_indexed=0;_total=0;});
     try {
       final selected=await _source.selected();
       final favorites=await _source.favorites();
       final access = selected.isNotEmpty ?
         await _source.permission() : null;
+      if (!mounted || generation!=_refreshGeneration) return;
       final photos=selected.isEmpty ? <AssetEntity>[] :
         access != null && access.hasAccess ?
-          await _source.selectedPhotos(selected) : <AssetEntity>[];
-      if(!mounted)return;
+          await _source.selectedPhotos(
+            selected,
+            shouldCancel: () => !mounted || generation!=_refreshGeneration,
+            onProgress: (done, total) {
+              if (mounted && generation==_refreshGeneration) {
+                setState(() {_indexed=done;_total=total;});
+              }
+            }) : <AssetEntity>[];
+      if(!mounted || generation!=_refreshGeneration)return;
       setState((){_selected=selected;_favorites=favorites;_assets=photos;
         _busy=false;_error=selected.isNotEmpty &&
           !(access?.hasAccess ?? false) ? GalleryLocale.t('denied') : null;});
     } catch(e) {
-      if(!mounted)return;
+      if(!mounted || generation!=_refreshGeneration)return;
       setState((){_busy=false;_error='$e';});
     }
   }
@@ -103,16 +149,27 @@ class _GalleryHomeState extends State<GalleryHome> {
   }
 
   Future<void> _openPhoto(AssetEntity photo) async {
+    if (_viewerOpen) return;
+    _viewerOpen=true;
     final origin = _source.positionFor(photo.id);
-    await Navigator.push<void>(context,MaterialPageRoute(
-      builder:(context)=>PhotoDetail(
-        asset: photo,
-        album: origin?.album,
-        initialIndex: origin?.index ?? 0,
-        isFavorite: (asset) => _favorites.contains(asset.id),
-        onFavorite: _toggleFavorite,
-        onTrashed: _onTrashed,
-      )));
+    try {
+      await Navigator.push<void>(context,MaterialPageRoute(
+        builder:(context)=>PhotoDetail(
+          asset: photo,
+          album: origin?.album,
+          initialIndex: origin?.index ?? 0,
+          mediaVersion: _mediaVersion,
+          isFavorite: (asset) => _favorites.contains(asset.id),
+          onFavorite: _toggleFavorite,
+          onTrashed: _onTrashed,
+        )));
+    } finally {
+      _viewerOpen=false;
+      if (_pendingMediaChange) {
+        _pendingMediaChange=false;
+        _scheduleRefresh();
+      }
+    }
   }
 
   Future<void> _search() async {
@@ -126,7 +183,12 @@ class _GalleryHomeState extends State<GalleryHome> {
     final displayed=_favoritesOnly ?
       _assets.where((x)=>_favorites.contains(x.id)).toList() : _assets;
     return Scaffold(body:Stack(fit:StackFit.expand,children:[
-      if(_busy)const Center(child:CircularProgressIndicator())
+      if(_busy && _assets.isEmpty) Center(child:Column(
+        mainAxisSize:MainAxisSize.min,children:[
+          const CircularProgressIndicator(),
+          const SizedBox(height:16),
+          Text('$_indexed / $_total',style:const TextStyle(color:Colors.white70)),
+        ]))
       else if(_error!=null) Center(child:Padding(
         padding:const EdgeInsets.all(30),child:Column(
           mainAxisSize:MainAxisSize.min,children:[
@@ -159,6 +221,15 @@ class _GalleryHomeState extends State<GalleryHome> {
           GalleryThumbnailCache.instance.prefetch(asset),
         tileBuilder:(context,asset,zoom)=>LocalPhoto(
           key:ValueKey(asset.id),asset:asset)),
+      if (_busy && _assets.isNotEmpty) Positioned(
+        left:18,right:18,bottom:70,
+        child:SafeArea(top:false,child:Column(children:[
+          LinearProgressIndicator(value:_total>0 ?
+            (_indexed/_total).clamp(0.0,1.0) : null),
+          const SizedBox(height:5),
+          Text('$_indexed / $_total',style:const TextStyle(
+            fontSize:11,color:Colors.white70)),
+        ]))),
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;
