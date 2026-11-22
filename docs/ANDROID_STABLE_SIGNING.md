@@ -46,3 +46,15 @@ il fingerprint prima dell'analisi e della lenta compilazione Android.
 Se fallisce `KEY_PASSWORD_INVALID`, riesegui lo script di setup esistente
 in modalità riuso della keystore, inserendo la password originale in entrambi
 i campi. Non rigenerare la key e non cancellare i dati dell'app.
+
+## 22/11/2026 — Riduzione APK ARM64
+Il comando `flutter build apk --target-platform android-arm64` limita `libflutter.so` ma
+può includere ancora le librerie JNI di ML Kit per altre ABI. Il file Android
+generato dalla CI riceve il filtro `defaultConfig.ndk.abiFilters = arm64-v8a`
+tramite `scripts/enforce_arm64_gradle.py`. Il verificatore
+`scripts/verify_arm64_apk.py` blocca la pipeline se sono presenti
+`armeabi-v7a`, `x86_64` o altre ABI, se mancano il runtime Flutter o la
+libreria ML Kit ARM64, oppure se l'APK supera 36 MiB.
+Ciò vale per la distribuzione dedicata ARM64: per pubblicare APK universali
+serve una lane distinta, senza riutilizzare il file ARM64.
+La release aumenta `versionCode` da 6 a 7 mantenendo package e keystore.

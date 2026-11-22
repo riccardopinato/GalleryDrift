@@ -69,6 +69,8 @@ jobs:
           fi
           grep -q "KEY_PASSWORD_INVALID" "$scratch/negative.log"
           echo "SIGNING_PASSWORD_NEGATIVE_TEST_PASS"
+      - name: Regression tests for ARM64 size and ABI policy
+        run: python3 -m unittest discover -s scripts/tests -p 'test_arm64_packaging.py'
       - name: Test release-signature report parser
         run: python3 -m unittest discover -s scripts/tests -p 'test_verify_release_apk.py'
       - name: Create Android shell
@@ -77,6 +79,8 @@ jobs:
         run: rm -f test/widget_test.dart
       - name: Patch photo permissions
         run: python3 scripts/patch_android.py
+      - name: Enforce ARM64 native ABI packaging
+        run: python3 scripts/enforce_arm64_gradle.py
       - name: Render product launcher icon
         run: |
           python3 -m pip install --disable-pip-version-check "CairoSVG==2.7.1"
@@ -89,6 +93,8 @@ jobs:
         run: flutter test
       - name: Android ARM64 internal APK
         run: flutter build apk --release --target-platform android-arm64
+      - name: Verify ARM64-only ABI and APK size
+        run: python3 scripts/verify_arm64_apk.py --apk build/app/outputs/flutter-apk/app-release.apk --max-mib 36
       - name: End-to-end APK PEM signer SHA-256 verification (debug identity)
         shell: bash
         run: |
