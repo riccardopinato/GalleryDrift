@@ -118,7 +118,7 @@ class _SystemTrashScreenState extends State<SystemTrashScreen> {
           TextButton(
             onPressed: _mutating || _items.isEmpty ? null : () =>
               setState(() {
-                if (_selected.length == _items.length) {
+                if (_selected.length == _items.length.clamp(0,100)) {
                   _selected.clear();
                 } else {
                   _selected.addAll(_items.take(100).map((e) => e.uri));

@@ -65,6 +65,7 @@ class MainActivity : FlutterActivity() {
       MediaStore.MediaColumns.MIME_TYPE,
       MediaStore.MediaColumns.SIZE,
       MediaStore.MediaColumns.DATE_EXPIRES,
+      MediaStore.MediaColumns.VOLUME_NAME,
       MediaStore.MediaColumns.IS_TRASHED,
     )
     val result = arrayListOf<Map<String,Any?>>()
@@ -74,13 +75,17 @@ class MainActivity : FlutterActivity() {
       val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
       val bytesCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
       val expiresCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_EXPIRES)
+      val volumeCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.VOLUME_NAME)
       val trashCol = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.IS_TRASHED)
       while(cursor.moveToNext()){
         if(cursor.getInt(trashCol) != 1) continue
         val mime=cursor.getString(mimeCol) ?: ""
+        val volume=cursor.getString(volumeCol) ?: MediaStore.VOLUME_EXTERNAL_PRIMARY
+        // Action URIs must reference the concrete volume, not the synthetic
+        // union volume used for listing files across storage devices.
         val itemBase = when {
-          mime.startsWith("image/") -> MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-          mime.startsWith("video/") -> MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+          mime.startsWith("image/") -> MediaStore.Images.Media.getContentUri(volume)
+          mime.startsWith("video/") -> MediaStore.Video.Media.getContentUri(volume)
           else -> continue
         }
         val rowUri=ContentUris.withAppendedId(itemBase,cursor.getLong(idCol))
