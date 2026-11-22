@@ -58,3 +58,13 @@ libreria ML Kit ARM64, oppure se l'APK supera 36 MiB.
 Ciò vale per la distribuzione dedicata ARM64: per pubblicare APK universali
 serve una lane distinta, senza riutilizzare il file ARM64.
 La release aumenta `versionCode` da 6 a 7 mantenendo package e keystore.
+
+### Flutter CLI split ABI
+La prima CI della PR #11 ha dimostrato che il solo filtro Gradle in Flutter 3.50
+non è sufficiente: ML Kit ha lasciato comunque librerie JNI ARM32/x86_64.
+Usiamo perciò **anche** `flutter build apk --release --split-per-abi --target-platform android-arm64`
+e distribuiamo esclusivamente `app-arm64-v8a-release.apk`.
+Il filtro nel build.gradle resta una difesa aggiuntiva, ma la verifica
+ZIP dell'APK finale è la fonte di verità. Flutter può assegnare al
+singolo APK split un codice versione specifico per ABI: evitare futuri
+APK universali con versionCode minore, per non impedire gli update in-place.
