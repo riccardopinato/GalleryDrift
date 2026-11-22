@@ -3,6 +3,7 @@ import 'package:photo_manager/photo_manager.dart';
 import '../localization.dart';
 import '../services/local_gallery.dart';
 import 'preferences_backup_sheet.dart';
+import 'system_trash_screen.dart';
 
 Future<bool?> showAlbumSettings(BuildContext context, LocalGallery source,
     Set<String> current) => showModalBottomSheet<bool>(
@@ -135,6 +136,14 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
                 if (mounted) setState((){});
               }),
           ]),
+          TextButton.icon(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onPressed: () async {
+              await Navigator.of(context).push<void>(MaterialPageRoute(
+                builder:(_) => const SystemTrashScreen()));
+              if(mounted) await _readAccessible();
+            },
+            label: Text(GalleryLocale.t('trashReview'))),
           TextButton.icon(icon: const Icon(Icons.archive_outlined),
             onPressed: () async {
               final restored=await showPreferencesBackupSheet(context);
