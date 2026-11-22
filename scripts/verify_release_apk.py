@@ -11,14 +11,14 @@ import subprocess
 from pathlib import Path
 
 CERT_SHA256_LINE = re.compile(
-    r"(?im)^\\s*Signer\\s+(?:#\\d+|\\([^\\r\\n)]*\\))"
-    r"\\s+certificate\\s+SHA-256\\s+digest\\s*:\\s*([0-9a-fA-F:]+)\\s*$"
+    r"(?im)^\s*Signer\s+(?:#\d+|\([^\r\n)]*\))"
+    r"\s+certificate\s+SHA-256\s+digest\s*:\s*([0-9a-fA-F:]+)\s*$"
 )
-HEX64 = re.compile(r"[0-9a-f]{64}\\Z")
+HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 
 
 def normalize(text: str) -> str:
-    return re.sub(r"[:\\s]", "", text).lower()
+    return re.sub(r"[:\s]", "", text).lower()
 
 
 def verify_report(report: str, expected: str) -> set[str]:
