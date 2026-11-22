@@ -13,6 +13,7 @@ import 'screens/photo_detail.dart';
 import 'screens/batch_selection.dart';
 import 'widgets/local_photo.dart';
 import 'services/gallery_thumbnail_cache.dart';
+import 'services/catalog_delta.dart';
 import 'ui/gallery_theme.dart';
 
 Future<void> main() async {
@@ -106,9 +107,26 @@ class _GalleryHomeState extends State<GalleryHome> {
               }
             }) : <AssetEntity>[];
       if(!mounted || generation!=_refreshGeneration)return;
-      setState((){_selected=selected;_favorites=favorites;_assets=photos;
-        _busy=false;_error=selected.isNotEmpty &&
-          !(access?.hasAccess ?? false) ? GalleryLocale.t('denied') : null;});
+      final delta=CatalogDelta.between(
+        [for(final a in _assets)
+          CatalogItemRevision(a.id,a.modifiedDateTime.millisecondsSinceEpoch)],
+        [for(final a in photos)
+          CatalogItemRevision(a.id,a.modifiedDateTime.millisecondsSinceEpoch)]);
+      for (final id in delta.invalidatedIds) {
+        GalleryThumbnailCache.instance.evict(id);
+      }
+      _visual.forgetAll(delta.invalidatedIds);
+      // Preserve favorites for temporarily inaccessible media. Do not
+      // silently delete user preference IDs when Android narrows access.
+      if(!mounted || generation!=_refreshGeneration)return;
+      setState((){
+        _selected=selected;
+        _favorites=favorites;
+        _assets=delta.changed?photos:_assets;
+        _busy=false;
+        _error=selected.isNotEmpty &&
+          !(access?.hasAccess ?? false) ? GalleryLocale.t('denied') : null;
+      });
     } catch(e) {
       if(!mounted || generation!=_refreshGeneration)return;
       setState((){_busy=false;_error='$e';});
