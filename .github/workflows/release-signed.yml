@@ -1,6 +1,12 @@
 name: Gallery Drift — stable signed APK
 on:
   workflow_dispatch:
+  # Automatically exercise the release gate when this workflow is repaired.
+  # Ordinary code changes do NOT trigger a signed release.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release-signed.yml'
 permissions:
   contents: read
 jobs:
@@ -90,11 +96,7 @@ jobs:
           APK=build/app/outputs/flutter-apk/app-release.apk
           test -s "$APK"
           SDK_BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
-          python3 scripts/verify_release_apk.py \\
-            --apk "$APK" \\
-            --apksigner "$SDK_BUILD_TOOLS/apksigner" \\
-            --expected "$ANDROID_CERT_SHA256" \\
-            --report build/apk-signer-report.txt
+          python3 scripts/verify_release_apk.py --apk "$APK" --apksigner "$SDK_BUILD_TOOLS/apksigner" --expected "$ANDROID_CERT_SHA256" --report build/apk-signer-report.txt
           sha256sum "$APK" > build/release-sha256.txt
           echo "SIGNING_IDENTITY_VERIFIED"
       - uses: actions/upload-artifact@v4

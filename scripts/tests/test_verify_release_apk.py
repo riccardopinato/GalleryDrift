@@ -11,6 +11,22 @@ OTHER = "a" * 64
 
 
 class ApkCertificateParsingTests(unittest.TestCase):
+    def test_production_workflow_cli_parameters_not_escaped(self):
+        """Release action must invoke CLI with actual flags, not a literal shell \\."""
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github/workflows/release-signed.yml").read_text(encoding="utf-8")
+        command = next(
+            (line.strip() for line in workflow.splitlines()
+             if line.lstrip().startswith("python3 scripts/verify_release_apk.py")),
+            "",
+        )
+        self.assertTrue(command, "APK verification command missing")
+        self.assertIn('--apk "$APK"', command)
+        self.assertIn('--apksigner "$SDK_BUILD_TOOLS/apksigner"', command)
+        self.assertIn('--expected "$ANDROID_CERT_SHA256"', command)
+        self.assertIn('--report build/apk-signer-report.txt', command)
+        self.assertNotIn("\\", command)
+
     def test_numbered_signer(self):
         report = f"Signer #1 certificate SHA-256 digest: {SHA}\n"
         self.assertEqual(verify_report(report, SHA.upper()), {SHA})
