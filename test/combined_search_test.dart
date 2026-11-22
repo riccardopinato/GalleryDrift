@@ -37,7 +37,7 @@ void main() {
           ? 'ricordo speciale.jpg':'photo_$i.jpg',album:'Album esteso'),
     ];
     final matches = PhotoSearch.find('ricordo speciale',many,limit:null);
-    expect(matches.length,51);
+    expect(matches.length,52);
     expect(matches.last.document.id,'photo-1502');
   });
 

@@ -13,6 +13,7 @@ import 'screens/photo_detail.dart';
 import 'screens/batch_selection.dart';
 import 'widgets/local_photo.dart';
 import 'services/gallery_thumbnail_cache.dart';
+import 'ui/gallery_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,10 +29,7 @@ class GalleryDriftApp extends StatelessWidget {
     ValueListenableBuilder<String>(valueListenable:GalleryLocale.current,
       builder:(context,language,_)=>MaterialApp(
         title:'Gallery Drift',debugShowCheckedModeBanner:false,
-        theme:ThemeData(brightness:Brightness.dark,
-          scaffoldBackgroundColor:const Color(0xFF101117),
-          colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xFFE5C8A5),
-            brightness:Brightness.dark)),
+        theme:GalleryTheme.build(),
         home:const GalleryHome()));
 }
 
@@ -188,7 +186,13 @@ class _GalleryHomeState extends State<GalleryHome> {
   @override Widget build(BuildContext context) {
     final displayed=_favoritesOnly ?
       _assets.where((x)=>_favorites.contains(x.id)).toList() : _assets;
-    return Scaffold(body:Stack(fit:StackFit.expand,children:[
+    return Scaffold(backgroundColor:GalleryTheme.background,
+      body:Stack(fit:StackFit.expand,children:[
+      IgnorePointer(child:Align(alignment:Alignment.topCenter,
+        child:Container(height:140,
+          decoration:const BoxDecoration(gradient:LinearGradient(
+            begin:Alignment.topCenter,end:Alignment.bottomCenter,
+            colors:[Color(0xD9000000),Color(0x00000000)]))))),
       if(_busy && _assets.isEmpty) Center(child:Column(
         mainAxisSize:MainAxisSize.min,children:[
           const CircularProgressIndicator(),
@@ -247,17 +251,17 @@ class _GalleryHomeState extends State<GalleryHome> {
                 icon:const Icon(Icons.checklist_rounded),
                 style:IconButton.styleFrom(
                   backgroundColor:const Color(0xD3232530),
-                  foregroundColor:const Color(0xFFE5C8A5)))))) ,
+                  foregroundColor:GalleryTheme.accent)))))) ,
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;
           return SizedBox(height:53,child:Stack(children:[
-            Positioned(left:w/3,width:w/3,top:5,
+            Positioned(left:w*0.34,width:w*0.36,top:5,
               child:OutlinedButton.icon(onPressed:_search,
                 icon:const Icon(Icons.search,size:18),
                 label:Text(GalleryLocale.t('search')),
                 style:OutlinedButton.styleFrom(
-                  backgroundColor:const Color(0xD31B1B22),
+                  backgroundColor:const Color(0xDF1D222D),
                   foregroundColor:Colors.white))),
             Positioned(right:62,top:5,child:IconButton.filledTonal(
               tooltip:GalleryLocale.t('favorites'),

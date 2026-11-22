@@ -7,6 +7,7 @@ import 'preferences_backup_sheet.dart';
 Future<bool?> showAlbumSettings(BuildContext context, LocalGallery source,
     Set<String> current) => showModalBottomSheet<bool>(
   context: context, isScrollControlled: true, useSafeArea: true,
+  showDragHandle: true,
   builder: (_) => _AlbumSettings(source: source, selected: current),
 );
 
