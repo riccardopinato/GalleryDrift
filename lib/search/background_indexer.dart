@@ -8,6 +8,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../services/local_gallery.dart';
 import 'visual_index.dart';
+import '../semantic_lab/background_semantic.dart';
 
 /// Android WorkManager launches limited-size jobs even after the app exits.
 /// The OS controls their timing. No uploading or remote AI provider.
@@ -69,6 +70,10 @@ abstract final class BackgroundIndexer {
 @pragma('vm:entry-point')
 void galleryIndexDispatcher() {
   Workmanager().executeTask((task,input) async {
+    if(task==SemanticBackground.task) {
+      try { return await SemanticBackground.performTask(); }
+      catch(_) { return false; }
+    }
     if(task!=BackgroundIndexer.task)return true;
     WidgetsFlutterBinding.ensureInitialized();
     DartPluginRegistrant.ensureInitialized();

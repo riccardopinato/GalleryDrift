@@ -9,6 +9,8 @@ import 'services/local_gallery.dart';
 import 'search/combined_search.dart';
 import 'search/visual_index.dart';
 import 'search/background_indexer.dart';
+import 'semantic_lab/background_semantic.dart';
+import 'semantic_lab/semantic_index.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
 import 'screens/batch_selection.dart';
@@ -136,6 +138,10 @@ class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
       _visual.forgetAll(delta.invalidatedIds);
       if(selected.isNotEmpty && (delta.changed || generation==1)) {
         unawaited(BackgroundIndexer.schedule());
+        unawaited(SemanticBackground.schedule());
+      }
+      if(delta.changed && (access?.hasAccess??false)) {
+        unawaited(SemanticIndex.reconcile(photos));
       }
       // Preserve favorites for temporarily inaccessible media. Do not
       // silently delete user preference IDs when Android narrows access.
