@@ -1,18 +1,23 @@
-"""Regression tests for Android build-tools signer-report formats."""
+"""Regression tests for machine-readable signed APK X.509 certificate checking."""
+import hashlib
+import ssl
 import sys
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from verify_release_apk import verify_report
 
-SHA = "f40006cf22c4498e49f35737d050f65d0a0514e3ba8e946a089027aa1044399b"
-OTHER = "a" * 64
+DER1 = b"\x30\x03\x02\x01\x01"
+DER2 = b"\x30\x03\x02\x01\x02"
+PEM1 = ssl.DER_cert_to_PEM_cert(DER1)
+PEM2 = ssl.DER_cert_to_PEM_cert(DER2)
+SHA1 = hashlib.sha256(DER1).hexdigest()
+SHA2 = hashlib.sha256(DER2).hexdigest()
 
 
 class ApkCertificateParsingTests(unittest.TestCase):
     def test_production_workflow_cli_parameters_not_escaped(self):
-        """Release action must invoke CLI with actual flags, not a literal shell \\."""
         root = Path(__file__).resolve().parents[2]
         workflow = (root / ".github/workflows/release-signed.yml").read_text(encoding="utf-8")
         command = next(
@@ -27,41 +32,38 @@ class ApkCertificateParsingTests(unittest.TestCase):
         self.assertIn('--report build/apk-signer-report.txt', command)
         self.assertNotIn("\\", command)
 
-    def test_numbered_signer(self):
-        report = f"Signer #1 certificate SHA-256 digest: {SHA}\n"
-        self.assertEqual(verify_report(report, SHA.upper()), {SHA})
+    def test_pem_with_numbered_signer(self):
+        output = f"Signer #1 certificate SHA-256 digest: {SHA1}\n{PEM1}"
+        self.assertEqual(verify_report(output, SHA1.upper()), {SHA1})
 
-    def test_sdk_range_signer(self):
-        report = f"Signer (minSdkVersion=24, maxSdkVersion=32) certificate SHA-256 digest: {SHA}\n"
-        self.assertEqual(verify_report(report, ":".join(SHA[i:i+2] for i in range(0, 64, 2))), {SHA})
+    def test_pem_with_sdk_range_signer(self):
+        output = f"Signer (minSdkVersion=24, maxSdkVersion=36) cert info\n{PEM1}"
+        expected = ":".join(SHA1[i:i + 2] for i in range(0, 64, 2))
+        self.assertEqual(verify_report(output, expected), {SHA1})
 
-    def test_multiple_sdk_range_signers_same_certificate(self):
-        report = (
-            f"Signer (minSdkVersion=24, maxSdkVersion=32) certificate SHA-256 digest: {SHA}\n"
-            f"Signer (minSdkVersion=33, maxSdkVersion=36) certificate SHA-256 digest: {SHA}\n"
-        )
-        self.assertEqual(verify_report(report, SHA), {SHA})
+    def test_repeated_same_certificate(self):
+        self.assertEqual(verify_report(PEM1 + "\n" + PEM1, SHA1), {SHA1})
 
-    def test_wrong_signer_rejected(self):
-        report = f"Signer #1 certificate SHA-256 digest: {OTHER}\n"
+    def test_different_certificates_rejected(self):
         with self.assertRaisesRegex(ValueError, "APK_SIGNING_CERT_MISMATCH"):
-            verify_report(report, SHA)
+            verify_report(PEM1 + "\n" + PEM2, SHA1)
 
-    def test_mixed_signers_rejected(self):
-        report = (
-            f"Signer #1 certificate SHA-256 digest: {SHA}\n"
-            f"Signer #2 certificate SHA-256 digest: {OTHER}\n"
-        )
+    def test_wrong_certificate_rejected(self):
         with self.assertRaisesRegex(ValueError, "APK_SIGNING_CERT_MISMATCH"):
-            verify_report(report, SHA)
+            verify_report(PEM1, SHA2)
 
-    def test_missing_cert_sha_rejected(self):
-        with self.assertRaisesRegex(ValueError, "APK_CERT_SHA256_NOT_FOUND"):
-            verify_report("Signer #1 public key SHA-256 digest: " + SHA, SHA)
+    def test_report_without_pem_rejected(self):
+        with self.assertRaisesRegex(ValueError, "APK_CERT_PEM_NOT_FOUND"):
+            verify_report("Signer #1 certificate SHA-256 digest: " + SHA1, SHA1)
 
-    def test_bad_expected_rejected(self):
+    def test_invalid_expected_fingerprint(self):
         with self.assertRaisesRegex(ValueError, "EXPECTED_FINGERPRINT_INVALID"):
-            verify_report("Signer #1 certificate SHA-256 digest: " + SHA, "bad")
+            verify_report(PEM1, "wrong")
+
+    def test_malformed_pem_rejected(self):
+        invalid = "-----BEGIN CERTIFICATE-----\n@@@\n-----END CERTIFICATE-----"
+        with self.assertRaisesRegex(ValueError, "APK_CERT_PEM_NOT_FOUND"):
+            verify_report(invalid, SHA1)
 
 
 if __name__ == "__main__":
