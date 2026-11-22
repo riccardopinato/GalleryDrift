@@ -247,7 +247,7 @@ class _GalleryHomeState extends State<GalleryHome> {
                 icon:const Icon(Icons.checklist_rounded),
                 style:IconButton.styleFrom(
                   backgroundColor:const Color(0xD3232530),
-                  foregroundColor:const Color(0xFFE5C8A5))))),
+                  foregroundColor:const Color(0xFFE5C8A5)))))) ,
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;
@@ -298,7 +298,7 @@ class _LocalSearch extends SearchDelegate<AssetEntity?> {
             album: albumName(photo.id),
             labels: indexer.labelsFor(photo)),
       ];
-      final hits = PhotoSearch.find(query, documents);
+      final hits = PhotoSearch.find(query, documents, limit:null);
       final lookup = {for (final photo in assets) photo.id: photo};
       return Column(children: [
         Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),

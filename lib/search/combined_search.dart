@@ -77,7 +77,7 @@ abstract final class PhotoSearch {
 
   static List<PhotoSearchHit> find(
     String query, List<PhotoSearchDocument> candidates,
-    {int limit = 100}) {
+    {int? limit = 100}) {
     final words = normalize(query).split(' ').where((x) => x.isNotEmpty).toList();
     if (words.isEmpty) return const [];
     final results = <PhotoSearchHit>[];
@@ -113,6 +113,6 @@ abstract final class PhotoSearch {
       final s = b.score.compareTo(a.score);
       return s != 0 ? s : a.document.id.compareTo(b.document.id);
     });
-    return results.take(limit).toList();
+    return limit == null ? results : results.take(limit).toList();
   }
 }

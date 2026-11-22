@@ -73,7 +73,8 @@ class VisualIndex extends ChangeNotifier {
             'labels': entry.value.labels},
       },
     }), flush:true);
-    if (await file.exists()) await file.delete();
+    // Never deliberately delete the only valid index before the replacement.
+    // Android rename replaces destination on the supported filesystems.
     await staging.rename(file.path);
   }
 
@@ -81,11 +82,13 @@ class VisualIndex extends ChangeNotifier {
     if (_running) return;
     await load();
     _running = true; _cancel = false; errors = 0; progress = 0;
-    // Only the currently selected album bootstrap is indexed. The gallery
-    // viewer may page beyond 800; a full-library discovery pass is separate.
-    final allowed = selectedPhotos.map((a) => a.id).toSet();
+    // The entire selected MediaStore catalog is eligible; label only images.
+    // Videos are searchable by filename and album metadata.
+    final images = selectedPhotos.where(
+      (asset) => asset.type == AssetType.image).toList();
+    final allowed = images.map((a) => a.id).toSet();
     _entries.removeWhere((id, _) => !allowed.contains(id));
-    final work = selectedPhotos.where((asset) {
+    final work = images.where((asset) {
       final record = _entries[asset.id];
       return record == null ||
         record.revision != asset.modifiedDateTime.millisecondsSinceEpoch;
@@ -118,10 +121,10 @@ class VisualIndex extends ChangeNotifier {
         } finally {
           if (await tmp.exists()) await tmp.delete();
           progress++;
-          if (progress % 12 == 0) {
+          if (progress % 80 == 0) {
             await _persist();
           }
-          _emit();
+          if (progress % 8 == 0 || progress == total) _emit();
         }
       }
     } finally {

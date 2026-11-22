@@ -30,9 +30,21 @@ void main() {
   test('no false match for unknown city in visual labels', () {
     expect(PhotoSearch.find('Tokyo',docs),isEmpty);
   });
+  test('full-catalog search includes records past index 800', () {
+    final many = [
+      for (var i = 0; i < 1503; i++)
+        PhotoSearchDocument(id:'photo-$i',filename:i>1450
+          ? 'ricordo speciale.jpg':'photo_$i.jpg',album:'Album esteso'),
+    ];
+    final matches = PhotoSearch.find('ricordo speciale',many,limit:null);
+    expect(matches.length,51);
+    expect(matches.last.document.id,'photo-1502');
+  });
+
   test('query requires all words, stays accent-insensitive', () {
     expect(PhotoSearch.find('gatto compleanno',docs).single.document.id,'1');
     expect(PhotoSearch.normalize('Città  PARIGI'),'citta parigi');
     expect(PhotoSearch.find('',docs),isEmpty);
   });
 }
+

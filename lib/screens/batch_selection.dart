@@ -22,10 +22,15 @@ class _BatchSelection extends StatefulWidget {
 }
 
 class _BatchSelectionState extends State<_BatchSelection> {
-  late final List<AssetEntity> _assets=[
-    for (final a in widget.assets)
-      if (a.type == AssetType.image) a,
-  ];
+  late final List<AssetEntity> _assets;
+  @override
+  void initState() {
+    super.initState();
+    _assets = [
+      for (final item in widget.assets)
+        if (item.type == AssetType.image || item.type == AssetType.video) item,
+    ];
+  }
   final Set<String> _selection = {};
   bool _busy=false;
   int _moved=0;
@@ -132,7 +137,7 @@ class _BatchSelectionState extends State<_BatchSelection> {
             ? _trash : null,
           icon:const Icon(Icons.delete_outline),
           label:Text(GalleryLocale.t('trash')+
-            ' ('+_selection.length.toString()+')')))),
+            ' ('+_selection.length.toString()+')'))))),
     ]),
   );
 }
