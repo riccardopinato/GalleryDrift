@@ -160,7 +160,7 @@ abstract final class SemanticIndex {
   static Future<List<SemanticHit>> search(String phrase,
       List<AssetEntity> visible,{int limit=100}) async {
     if(phrase.trim().isEmpty || !await MobileClipModels.ready())return [];
-    final prompts=_englishPrompt(phrase);
+    final prompts=englishPrompt(phrase);
     final session=await MobileClipSession.text();
     late final List<double> text;
     try{text=await session.textEmbedding(prompts);}
@@ -189,8 +189,10 @@ abstract final class SemanticIndex {
     }finally{await db.close();}
   }
 
-  static String _englishPrompt(String input) {
-    final raw=input.toLowerCase().trim();
+  static String englishPrompt(String input) {
+    final raw=input.toLowerCase().trim()
+      .replaceAll('animale domestico','pet')
+      .replaceAll('animali domestici','pets');
     const italian={
       'gatto':'cat','gatti':'cats','gattino':'kitten','felino':'cat',
       'cane':'dog','cani':'dogs','animale domestico':'pet',
@@ -198,6 +200,11 @@ abstract final class SemanticIndex {
       'montagna':'mountain','bicicletta':'bicycle',
       'macchina':'car','auto':'car','persone':'people',
       'albero':'tree','fiore':'flower','cibo':'food',
+      'nero':'black','nera':'black','rossa':'red','rosso':'red',
+      'bianco':'white','bianca':'white','blu':'blue',
+      'divano':'sofa','letto':'bed','finestra':'window',
+      'sul':'on','sulla':'on','su':'on','sotto':'under',
+      'pet':'pet','pets':'pets','vicino':'near','presso':'near',
     };
     final translated=<String>[];
     for(final word in raw.split(RegExp(r'\s+'))){

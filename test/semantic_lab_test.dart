@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gallerydrift/semantic_lab/clip_bpe.dart';
 import 'package:gallerydrift/semantic_lab/mobileclip_models.dart';
+import 'package:gallerydrift/semantic_lab/semantic_index.dart';
 
 void main(){
   test('CLIP BPE special tokens, merges and fixed 77-token context',(){
@@ -28,6 +29,13 @@ void main(){
     expect(unit[1],closeTo(.8,1e-9));
     expect(cosine(unit,unit),closeTo(1,1e-9));
     expect(()=>l2Unit(List<double>.filled(512,0)),throwsStateError);
+  });
+
+  test('Italian semantic prompts normalize cat and household descriptions',(){
+    expect(SemanticIndex.englishPrompt('gatto nero sul divano'),
+      'a photo of a cat black on sofa');
+    expect(SemanticIndex.englishPrompt('animale domestico'),
+      'a photo of pet');
   });
 
   test('source uses dual ONNX encoders and no bundled weights',(){
