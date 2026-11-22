@@ -56,6 +56,15 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: python3 scripts/configure_release_signing.py
+      - name: Preflight — verify PKCS12 private key and SHA-256
+        shell: bash
+        env:
+          ANDROID_SIGNING_KEYSTORE_PATH: ${{ github.workspace }}/.signing/app.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_CERT_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
+        run: java scripts/VerifySigning.java
       - name: Resolve packages
         run: flutter pub get
       - name: Analyze and test

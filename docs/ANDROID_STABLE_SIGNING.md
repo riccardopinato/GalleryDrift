@@ -34,3 +34,15 @@ Apri Actions → **Gallery Drift — stable signed APK** → Run workflow sulla 
 
 ## Verifica aggiornamento
 Aggiornamento possibile solo con `applicationId` uguale, SHA-256 certificato compatibile, `versionCode` maggiore. Testa installazione senza disinstallare dopo aver creato la prima release firmata con questa keystore. Per versioni Play App Signing il certificato del download da Play può differire dalla chiave upload.
+
+## Verifica preventiva delle password (PKCS12)
+Lo script locale `Setup-Drift-Signing.ps1` crea `-storetype PKCS12` con `keytool`.
+La password della chiave privata è la **stessa** password della keystore.
+Entrambi i secret `ANDROID_KEYSTORE_PASSWORD` e `ANDROID_KEY_PASSWORD` devono
+quindi contenere la **medesima password originale** scelta durante la creazione
+del file, senza creare una keystore nuova. Non condividere password in chat o
+issue. Il check `scripts/VerifySigning.java` prova ad aprire la chiave e verifica
+il fingerprint prima dell'analisi e della lenta compilazione Android.
+Se fallisce `KEY_PASSWORD_INVALID`, riesegui lo script di setup esistente
+in modalità riuso della keystore, inserendo la password originale in entrambi
+i campi. Non rigenerare la key e non cancellare i dati dell'app.
