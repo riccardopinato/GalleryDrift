@@ -1,46 +1,51 @@
 #!/usr/bin/env python3
-"""Fail-closed comparison of APK signer certificate SHA-256 digests.
+"""Verify APK signer X.509 certificate SHA-256 from PEM, not localized text.
 
-Android build-tools apksigner versions may report "Signer #1" or
-"Signer (minSdkVersion=..., maxSdkVersion=...)". A fixed "#1" sed
-expression can falsely reject a correctly signed APK.
+Android's apksigner verifies the APK cryptographic signature and --print-certs-pem
+prints signer certificate(s) in machine-readable PEM.  Comparing the DER SHA-256
+is independent of the human-readable reporting format and SDK range labels.
 """
 import argparse
+import hashlib
 import re
+import ssl
 import subprocess
 from pathlib import Path
 
-CERT_SHA256_LINE = re.compile(
-    r"(?im)^\s*Signer\s+(?:#\d+|\([^\r\n)]*\))"
-    r"\s+certificate\s+SHA-256\s+digest\s*:\s*([0-9a-fA-F:]+)\s*$"
+PEM_CERTIFICATE = re.compile(
+    r"-----BEGIN CERTIFICATE-----\s*[A-Za-z0-9+/\s=]+?\s*-----END CERTIFICATE-----",
+    flags=re.MULTILINE,
 )
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 
 
-def normalize(text: str) -> str:
-    return re.sub(r"[:\s]", "", text).lower()
+def normalize(value: str) -> str:
+    return re.sub(r"[:\s]", "", value).lower()
 
 
 def verify_report(report: str, expected: str) -> set[str]:
-    normalized_expected = normalize(expected)
-    if not HEX64.fullmatch(normalized_expected):
-        raise ValueError("EXPECTED_FINGERPRINT_INVALID: expected 64 hex digits")
-    digests = [normalize(m.group(1)) for m in CERT_SHA256_LINE.finditer(report)]
-    if not digests:
+    expected_sha = normalize(expected)
+    if not HEX64.fullmatch(expected_sha):
+        raise ValueError("EXPECTED_FINGERPRINT_INVALID: require 64 hexadecimal digits")
+    matches = PEM_CERTIFICATE.findall(report)
+    if not matches:
         raise ValueError(
-            "APK_CERT_SHA256_NOT_FOUND: apksigner output did not contain an "
-            "understood certificate digest (check build-tools output variant)"
+            "APK_CERT_PEM_NOT_FOUND: apksigner did not report any signer certificate PEM"
         )
-    if any(not HEX64.fullmatch(digest) for digest in digests):
-        raise ValueError("APK_CERT_SHA256_INVALID: malformed signer certificate digest")
-    unique = set(digests)
-    if unique != {normalized_expected}:
+    observed = set()
+    for pem in matches:
+        try:
+            der = ssl.PEM_cert_to_DER_cert(pem)
+        except (ValueError, ssl.SSLError) as error:
+            raise ValueError("APK_CERT_PEM_INVALID: malformed signer certificate") from error
+        observed.add(hashlib.sha256(der).hexdigest())
+    if observed != {expected_sha}:
         raise ValueError(
-            "APK_SIGNING_CERT_MISMATCH: APK signer certificates do not match "
-            "ANDROID_CERT_SHA256; signer digests="
-            + ",".join(sorted(unique))
+            "APK_SIGNING_CERT_MISMATCH: APK signer certificate SHA-256 differs "
+            "from the pinned expected certificate; observed="
+            + ",".join(sorted(observed))
         )
-    return unique
+    return observed
 
 
 def main() -> int:
@@ -53,13 +58,13 @@ def main() -> int:
     if not args.apk.is_file():
         parser.error("APK_MISSING")
     result = subprocess.run(
-        [str(args.apksigner), "verify", "--print-certs", str(args.apk)],
-        check=True, capture_output=True, text=True,
+        [str(args.apksigner), "verify", "--print-certs-pem", str(args.apk)],
+        check=True, capture_output=True, text=True
     )
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(result.stdout, encoding="utf-8")
     verify_report(result.stdout, args.expected)
-    print("SIGNING_IDENTITY_VERIFIED")
+    print("SIGNING_IDENTITY_VERIFIED_FROM_PEM")
     return 0
 
 
