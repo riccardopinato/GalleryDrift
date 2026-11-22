@@ -251,7 +251,7 @@ class _GalleryHomeState extends State<GalleryHome> {
                 icon:const Icon(Icons.checklist_rounded),
                 style:IconButton.styleFrom(
                   backgroundColor:const Color(0xD3232530),
-                  foregroundColor:GalleryTheme.accent)))))) ,
+                  foregroundColor:GalleryTheme.accent))))) ,
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;

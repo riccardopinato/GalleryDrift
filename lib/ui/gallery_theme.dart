@@ -24,7 +24,7 @@ abstract final class GalleryTheme {
         elevation: 0,
         scrolledUnderElevation: 0),
       textTheme: const TextTheme(
-        titleLarge: TextStyle(fontSize: 23, fontWeight: FontWeight.w650,
+        titleLarge: TextStyle(fontSize: 23, fontWeight: FontWeight.w600,
           letterSpacing: -0.6),
         titleMedium: TextStyle(fontSize: 17, fontWeight: FontWeight.w600,
           letterSpacing: -0.2)),
