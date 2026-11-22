@@ -210,6 +210,15 @@ abstract final class SemanticIndex {
     for(final word in raw.split(RegExp(r'\s+'))){
       translated.add(italian[word]??word);
     }
-    return 'a photo of '+translated.join(' ');
+    var english=translated.join(' ');
+    // Basic noun/adjective order for common Italian visual queries.
+    english=english.replaceAllMapped(
+      RegExp(r'\b(cat|dog|kitten) (black|white|red|blue)\b'),
+      (match)=>match.group(2)!+' '+match.group(1)!);
+    if(RegExp(r'^(?:(?:black|white|red|blue) )?(?:cat|dog|kitten|pet)\b')
+        .hasMatch(english)) {
+      english='a '+english;
+    }
+    return 'a photo of '+english;
   }
 }

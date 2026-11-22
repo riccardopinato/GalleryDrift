@@ -33,9 +33,9 @@ void main(){
 
   test('Italian semantic prompts normalize cat and household descriptions',(){
     expect(SemanticIndex.englishPrompt('gatto nero sul divano'),
-      'a photo of a cat black on sofa');
+      'a photo of a black cat on sofa');
     expect(SemanticIndex.englishPrompt('animale domestico'),
-      'a photo of pet');
+      'a photo of a pet');
   });
 
   test('source uses dual ONNX encoders and no bundled weights',(){
