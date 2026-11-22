@@ -26,6 +26,15 @@ abstract final class GalleryLocale {
 
   static const _texts = <String, Map<String,String>>{
     'it': {
+      'backupPreferences':"Backup e ripristino",
+      'backupDetails':"Copia un backup JSON di cartelle, preferiti, lingua e posizione del canvas. Non comprende immagini o video. Conservalo in un luogo privato.",
+      'copyBackup':"Copia backup",
+      'pasteBackup':"Incolla qui il backup JSON",
+      'inspectBackup':"Verifica backup",
+      'restorePreferences':"Ripristina",
+      'restoreConfirm':"Sostituire cartelle, preferiti, lingua e posizione del canvas con quelle del backup? Le fotografie sul telefono non vengono cancellate.",
+      'backupCopied':"Backup copiato negli appunti",
+
       'albumChanged':"La cartella è cambiata. Chiudi e riapri la foto per mantenere corretto l'ordine.",
       'mediaUnavailable':"File originale non disponibile",
       'play':"Riproduci",
@@ -56,6 +65,15 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Scorri a sinistra o a destra per esplorare questa cartella',
       'albumReadError':'Impossibile leggere tutte le foto della cartella. Puoi comunque visualizzare quella aperta.'},
     'en': {
+      'backupPreferences':"Backup and restore",
+      'backupDetails':"Copy a JSON backup of folders, favorites, language and canvas camera. No photo or video bytes are included. Keep it private.",
+      'copyBackup':"Copy backup",
+      'pasteBackup':"Paste backup JSON here",
+      'inspectBackup':"Inspect backup",
+      'restorePreferences':"Restore",
+      'restoreConfirm':"Replace folders, favorites, language and canvas position with the backup? Device media will not be deleted.",
+      'backupCopied':"Backup copied to clipboard",
+
       'albumChanged':"The album changed. Close and reopen to keep the order correct.",
       'mediaUnavailable':"Original media unavailable",
       'play':"Play",
@@ -85,6 +103,15 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Swipe left or right to browse this album',
       'albumReadError':'Could not load the album count. The opened photo is still available.'},
     'fr': {
+      'backupPreferences':"Sauvegarde et restauration",
+      'backupDetails':"Copiez le JSON des dossiers, favoris, langue et position. Aucune photo ni vidéo. Gardez-le privé.",
+      'copyBackup':"Copier la sauvegarde",
+      'pasteBackup':"Collez le JSON",
+      'inspectBackup':"Vérifier",
+      'restorePreferences':"Restaurer",
+      'restoreConfirm':"Remplacer les préférences ? Les fichiers du téléphone ne seront pas supprimés.",
+      'backupCopied':"Sauvegarde copiée",
+
       'albumChanged':"Cet album a changé. Fermez et rouvrez pour conserver le bon ordre.",
       'mediaUnavailable':"Fichier original indisponible",
       'play':"Lire",
@@ -113,6 +140,15 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Balayez pour parcourir cet album',
       'albumReadError':'Impossible de lire toutes les photos du dossier. La photo ouverte reste disponible.'},
     'es': {
+      'backupPreferences':"Copia y restauración",
+      'backupDetails':"Copia el JSON de carpetas, favoritos, idioma y posición. No incluye fotos ni vídeos. Guárdalo en privado.",
+      'copyBackup':"Copiar copia",
+      'pasteBackup':"Pega el JSON",
+      'inspectBackup':"Verificar",
+      'restorePreferences':"Restaurar",
+      'restoreConfirm':"¿Sustituir las preferencias? No se borran los archivos del teléfono.",
+      'backupCopied':"Copia en el portapapeles",
+
       'albumChanged':"El álbum ha cambiado. Cierra y vuelve a abrir para mantener el orden.",
       'mediaUnavailable':"Archivo original no disponible",
       'play':"Reproducir",
@@ -141,6 +177,15 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Desliza para explorar esta carpeta',
       'albumReadError':'No se pudo leer el álbum completo. La foto abierta sigue disponible.'},
     'de': {
+      'backupPreferences':"Sichern und wiederherstellen",
+      'backupDetails':"JSON-Backup für Ordner, Favoriten, Sprache und Position. Ohne Mediendateien. Privat aufbewahren.",
+      'copyBackup':"Backup kopieren",
+      'pasteBackup':"JSON einfügen",
+      'inspectBackup':"Prüfen",
+      'restorePreferences':"Wiederherstellen",
+      'restoreConfirm':"Einstellungen ersetzen? Gerätedateien bleiben erhalten.",
+      'backupCopied':"Backup kopiert",
+
       'albumChanged':"Das Album wurde geändert. Schließe es und öffne es erneut.",
       'mediaUnavailable':"Originaldatei nicht verfügbar",
       'play':"Abspielen",
@@ -169,6 +214,15 @@ abstract final class GalleryLocale {
       'albumSwipeHint':'Wische nach links oder rechts, um das Album zu durchsuchen',
       'albumReadError':'Das Album konnte nicht vollständig gelesen werden. Das geöffnete Foto ist verfügbar.'},
     'pt': {
+      'backupPreferences':"Cópia e restauro",
+      'backupDetails':"Copia JSON das pastas, favoritos, idioma e posição. Sem fotos ou vídeos. Guarda em privado.",
+      'copyBackup':"Copiar cópia",
+      'pasteBackup':"Colar JSON",
+      'inspectBackup':"Verificar",
+      'restorePreferences':"Restaurar",
+      'restoreConfirm':"Substituir preferências? Os ficheiros do dispositivo não serão eliminados.",
+      'backupCopied':"Cópia copiada",
+
       'albumChanged':"A pasta mudou. Fecha e abre novamente para manter a ordem.",
       'mediaUnavailable':"Ficheiro original indisponível",
       'play':"Reproduzir",

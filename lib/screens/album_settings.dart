@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../localization.dart';
 import '../services/local_gallery.dart';
+import 'preferences_backup_sheet.dart';
 
 Future<bool?> showAlbumSettings(BuildContext context, LocalGallery source,
     Set<String> current) => showModalBottomSheet<bool>(
@@ -129,6 +130,12 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
                 if (mounted) setState((){});
               }),
           ]),
+          TextButton.icon(icon: const Icon(Icons.archive_outlined),
+            onPressed: () async {
+              final restored=await showPreferencesBackupSheet(context);
+              if (mounted && restored==true) Navigator.pop(context,true);
+            },
+            label: Text(GalleryLocale.t('backupPreferences'))),
           TextButton.icon(icon: const Icon(Icons.privacy_tip_outlined),
             onPressed: () => showDialog<void>(context:context,
               builder:(ctx)=> AlertDialog(
