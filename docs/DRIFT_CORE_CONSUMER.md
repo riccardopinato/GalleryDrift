@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: 832ae259aa2988fc3b0e1db261034a596a9a793f
+Pinned core source commit (candidate only): 6c192d9eb6ce0fbfbd57db89940315b2b970404d
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -19,3 +19,9 @@ The gallery NEVER copies Art Drift canvas code: it imports drift_core and suppli
 - Play Store media access policy must be reviewed: broad READ_MEDIA_IMAGES is defensible only for sustained photo-gallery core functionality; Data Safety / hosted privacy policy not certified.
 
 No source tests or physical QA are declared passed until GitHub CI evidence exists. This scaffold is a consumer integration, not a Store-ready release.
+
+
+## G2 cross-app candidate check — 24 November 2026
+This review-only branch temporarily pins ArtDrift Core source `6c192d9eb6ce0fbfbd57db89940315b2b970404d` from ArtDrift [PR #59](https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery/pull/59), stacked on integrated [PR #58](https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery/pull/58). The current GalleryDrift `main` pin stays **unchanged at 2dac51a6be98ed364d1e95983d1f330c84354ef7**.
+
+Expected parity: optional `museumControls=false` by default and no changes to `InfiniteWorld`, camera persistence, album selection/permissions, search of local photos or photo privacy. This is a consumer compile+tests gate, not a source adoption authorization. Review source changes, `flutter analyze`, `flutter test`, ARM64 Android CI and real Gallery device acceptance before moving pin on main. If ArtDrift PR #59 merges with a new SHA, pin **that exact merged main commit**, do not merge this temporary pre-merge pin as-is.
