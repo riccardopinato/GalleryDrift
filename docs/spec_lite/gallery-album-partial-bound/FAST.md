@@ -18,4 +18,4 @@ Initial status: `PROPOSED`; this document does not approve product scope, certif
 
 ## Integration receipt (source scope)
 
-PR [#20](https://github.com/riccardopinato/GalleryDrift/pull/20) merged to `30c26f2b23bccbf9237163467ef0fe664e915967`. Branch Android CI passed, including added regression. Postmerge Android [run](https://github.com/riccardopinato/GalleryDrift/actions/runs/45984531353) initially pending; do not mark as certified before success. Scope remains Gallery-only and runtime/device acceptance remains NOT_VERIFIED.
+PR [#20](https://github.com/riccardopinato/GalleryDrift/pull/20) merged to `30c26f2b23bccbf9237163467ef0fe664e915967`. Branch Android CI passed, including added regression. Postmerge Android [run SUCCESS](https://github.com/riccardopinato/GalleryDrift/actions/runs/45984531353) on main `30c26f2b23bccbf9237163467ef0fe664e915967`; source/CI verified, NOT device or store certified. Scope remains Gallery-only and runtime/device acceptance remains NOT_VERIFIED.
