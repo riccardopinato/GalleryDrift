@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: a911ee80898f01db2d2c4bb8cf9165dd2d35db4f
+Pinned core source commit: 45984f1ee15c7c8d80d7c4a65c18f67bf3674407
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -32,4 +32,4 @@ Final source pin: Art Drift G2 Core merged PR #106, canonical commit `ec5136e90a
 
 ## Random museum start compatibility — 2026-11-27
 
-Temporary Art Drift PR #110 source pin `a911ee80898f01db2d2c4bb8cf9165dd2d35db4f`. Shared Core `initialWorldCenter` is nullable and Gallery never supplies it, preserving saved album canvas camera, photo permissions, local trash and favorites. **Do not merge temporary pin** before canonical Art PR #110 merges; after that replace with merged Art main commit and rerun exact-head Gallery Android CI.
+Canonical merged Art Drift PR #110 source pin `45984f1ee15c7c8d80d7c4a65c18f67bf3674407`. Shared Core `initialWorldCenter` is nullable and Gallery never supplies it, preserving saved album canvas camera, photo permissions, local trash and favorites. Art PR #110 has merged; this exact canonical Art main commit is ready for Gallery Android exact-head CI. Physical gesture/device QA remains separate.
