@@ -32,6 +32,20 @@ class AlbumPager<T> {
     }
   }
 
+  /// Warm one next album page when the viewer is within two items of a
+  /// boundary. This reuses the same cached Future as foreground reads and
+  /// never scans beyond [totalCount], requests full-size photos, or writes.
+  ///
+  /// The caller can ignore a transient warm-up error: [at] evicts the
+  /// failed Future so the foreground page may retry normally.
+  Future<void> prefetchNext(int index, {required int totalCount}) async {
+    if (index < 0 || totalCount <= 0 || index >= totalCount) return;
+    if (index % pageSize < pageSize - 2) return;
+    final nextStart = ((index ~/ pageSize) + 1) * pageSize;
+    if (nextStart >= totalCount) return;
+    await at(nextStart);
+  }
+
   /// Keep only neighboring pages. Does not cancel already pending platform
   /// operations; it bounds retained page futures and media entities.
   void retainNear(int index) {
