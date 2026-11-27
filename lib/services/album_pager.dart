@@ -43,7 +43,17 @@ class AlbumPager<T> {
     if (index % pageSize < pageSize - 2) return;
     final nextStart = ((index ~/ pageSize) + 1) * pageSize;
     if (nextStart >= totalCount) return;
-    await at(nextStart);
+    // Do not request MediaStore entries beyond the selected album count.
+    // Share this same bounded Future with the next foreground at() call.
+    final boundedEnd = nextStart + pageSize < totalCount
+        ? nextStart + pageSize : totalCount;
+    final page = nextStart ~/ pageSize;
+    try {
+      await _pages.putIfAbsent(page, () => readRange(nextStart, boundedEnd));
+    } catch (_) {
+      _pages.remove(page);
+      rethrow;
+    }
   }
 
   /// Keep only neighboring pages. Does not cancel already pending platform

@@ -2,6 +2,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gallerydrift/services/album_pager.dart';
 
 void main() {
+
+  test('partial final album page is bounded to totalCount and reused', () async {
+    final ranges = <String>[];
+    final pager = AlbumPager<int>(pageSize: 4, readRange: (start, end) async {
+      ranges.add('$start:$end');
+      return [for (var i = start; i < end; i++) i];
+    });
+    await pager.prefetchNext(7, totalCount: 9);
+    expect(ranges, ['8:9']);
+    expect(await pager.at(8), 8);
+    expect(ranges, ['8:9']);
+    await pager.prefetchNext(8, totalCount: 9);
+    expect(ranges, ['8:9']);
+  });
+
   test('page reader preserves album order beyond 800 without full loading', () async {
     final ranges = <String>[];
     final pager = AlbumPager<int>(
