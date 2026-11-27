@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: 832ae259aa2988fc3b0e1db261034a596a9a793f
+Pinned core source commit: 279ec531760a6f202a8867a23c7dd0d38a743383
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -19,3 +19,23 @@ The gallery NEVER copies Art Drift canvas code: it imports drift_core and suppli
 - Play Store media access policy must be reviewed: broad READ_MEDIA_IMAGES is defensible only for sustained photo-gallery core functionality; Data Safety / hosted privacy policy not certified.
 
 No source tests or physical QA are declared passed until GitHub CI evidence exists. This scaffold is a consumer integration, not a Store-ready release.
+
+
+## Temporary G2 consumer QA — 23 November 2026
+
+**TEST-ONLY PIN:** `279ec531760a6f202a8867a23c7dd0d38a743383` points at the unmerged Art Drift G2
+integrated candidate PR #40. It is NOT a production or main-branch upgrade.
+This draft branch exists only to run Gallery Drift's Flutter analyzer, widget
+tests, ABI/size policy and internal Android build against the optional new
+Drift Core museum controls and tile anchors. The default Gallery behavior
+must remain unchanged. Keep this test branch separate and DO NOT merge or
+update Gallery Drift main unless Art Drift's Core has first passed the
+canonical source gates and an explicit user-approved consumer update.
+
+## G3 Quiet Canvas optional fade — 23/11/2026
+
+La PR QA consumer punta provvisoriamente al commit Art Drift `279ec531760a6f202a8867a23c7dd0d38a743383`.
+Il nuovo fade dei controlli Auto è attivo **esclusivamente con `museumControls: true`**.
+Gallery Drift non abilita questa modalità; il suo rendering e le sue gesture
+restano nel percorso preesistente. Questa è una verifica CI del consumer, NON
+un aggiornamento di produzione del pin `main`.
