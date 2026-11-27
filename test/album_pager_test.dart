@@ -41,6 +41,50 @@ void main() {
     expect(loads, 2);
   });
 
+  test('prefetch at boundary warms exactly the next page once', () async {
+    final ranges = <String>[];
+    final pager = AlbumPager<int>(pageSize: 4, readRange: (start, end) async {
+      ranges.add('$start:$end');
+      return [for (var i = start; i < end; i++) i];
+    });
+    await pager.prefetchNext(1, totalCount: 11);
+    expect(ranges, isEmpty);
+    await pager.prefetchNext(2, totalCount: 11);
+    expect(ranges, ['4:8']);
+    await pager.prefetchNext(3, totalCount: 11);
+    expect(await pager.at(5), 5);
+    expect(ranges, ['4:8']);
+  });
+
+  test('prefetch never crosses album bounds or forces empty reads', () async {
+    var calls = 0;
+    final pager = AlbumPager<int>(pageSize: 4, readRange: (start, end) async {
+      calls++;
+      return [for (var i = start; i < end; i++) i];
+    });
+    for (final index in [-1, 0, 3, 4, 500]) {
+      await pager.prefetchNext(index, totalCount: 4);
+    }
+    await pager.prefetchNext(6, totalCount: 0);
+    expect(calls, 0);
+    await pager.prefetchNext(7, totalCount: 9);
+    expect(calls, 1);
+    expect(await pager.at(8), 8);
+    expect(calls, 1);
+  });
+
+  test('failed prefetch is evicted and foreground read can retry', () async {
+    var calls = 0;
+    final pager = AlbumPager<int>(pageSize: 4, readRange: (start, end) async {
+      calls++;
+      if (calls == 1) throw StateError('transient MediaStore error');
+      return [for (var i = start; i < end; i++) i];
+    });
+    await expectLater(pager.prefetchNext(3, totalCount: 12), throwsStateError);
+    expect(await pager.at(4), 4);
+    expect(calls, 2);
+  });
+
   test('transient read error can be retried', () async {
     var fail = true;
     final pager = AlbumPager<int>(readRange: (start, end) async {
