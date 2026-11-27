@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../localization.dart';
 import '../services/local_gallery.dart';
+import 'preferences_backup_sheet.dart';
+import 'system_trash_screen.dart';
+import '../search/background_indexer.dart';
 
 Future<bool?> showAlbumSettings(BuildContext context, LocalGallery source,
     Set<String> current) => showModalBottomSheet<bool>(
   context: context, isScrollControlled: true, useSafeArea: true,
+  showDragHandle: true,
   builder: (_) => _AlbumSettings(source: source, selected: current),
 );
 
@@ -20,6 +24,8 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   late final Set<String> _selected = {...widget.selected};
   List<AssetPathEntity> _albums = [];
   bool _busy = false;
+  bool _limited = false;
+  bool _autoTags=true;
   String? _error;
 
   @override
@@ -31,11 +37,12 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   Future<void> _readAccessible() async {
     setState(() => _busy = true);
     try {
+      final auto=await BackgroundIndexer.enabled();
       final state = await widget.source.permission();
       final albums = state.hasAccess ? await widget.source.albums() :
           <AssetPathEntity>[];
       if (!mounted) return;
-      setState(() { _albums = albums; _error = state.hasAccess ? null :
+      setState(() { _albums = albums; _autoTags=auto; _limited = state.isLimited; _error = state.hasAccess ? null :
         GalleryLocale.t('denied'); _busy = false; });
     } catch (error) {
       if (!mounted) return;
@@ -68,7 +75,7 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
   Widget build(BuildContext context) {
     return SafeArea(child: Padding(
       padding: const EdgeInsets.fromLTRB(20,16,20,20),
-      child: SizedBox(height: MediaQuery.sizeOf(context).height * 0.72,
+      child: SizedBox(height: MediaQuery.sizeOf(context).height * 0.88,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(GalleryLocale.t('settings'),
             style: Theme.of(context).textTheme.titleLarge),
@@ -79,10 +86,25 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
           OutlinedButton.icon(onPressed: _busy ? null : _request,
             icon: const Icon(Icons.photo_library_outlined),
             label: Text(GalleryLocale.t('grant'))),
+          if (_limited) TextButton.icon(
+            onPressed: _busy ? null : () async {
+              await PhotoManager.presentLimited(type: RequestType.common);
+              if (mounted) await _readAccessible();
+            },
+            icon: const Icon(Icons.collections_outlined),
+            label: Text(GalleryLocale.t('limitedAccess'))),
+          if (_error != null) TextButton.icon(
+            onPressed: () async => PhotoManager.openSetting(),
+            icon: const Icon(Icons.settings_outlined),
+            label: Text(GalleryLocale.t('openSystemSettings'))),
           if (_error != null) Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(_error!, style: const TextStyle(color: Colors.orangeAccent))),
           if (_busy) const LinearProgressIndicator(),
+          if (!_busy && _albums.isNotEmpty) Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Text('${_albums.length} · ${_selected.length}',
+              style: const TextStyle(fontSize: 12, color: Colors.white70))),
           Expanded(child: _albums.isEmpty ?
             Center(child: Text(GalleryLocale.t('none'))) :
             ListView.builder(
@@ -106,7 +128,12 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
             Expanded(child: FilledButton(onPressed: _busy ? null : _save,
               child: Text(GalleryLocale.t('apply')))),
           ]),
-          const SizedBox(height:18),
+          SizedBox(
+            height:MediaQuery.sizeOf(context).height * 0.30,
+            child:ListView(
+              padding:EdgeInsets.zero,
+              children:[
+                const SizedBox(height:8),
           Text(GalleryLocale.t('language')),
           Wrap(spacing:4, children: [
             for (final code in GalleryLocale.codes) ChoiceChip(
@@ -117,6 +144,31 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
                 if (mounted) setState((){});
               }),
           ]),
+          SwitchListTile(
+            dense:true,
+            contentPadding:EdgeInsets.zero,
+            title:Text(GalleryLocale.t('automaticTags')),
+            subtitle:Text(GalleryLocale.t('automaticTagsDetails'),
+              style:const TextStyle(fontSize:11)),
+            value:_autoTags,
+            onChanged:(enabled) async {
+              await BackgroundIndexer.setEnabled(enabled);
+              if(mounted)setState(()=>_autoTags=enabled);
+            }),
+          TextButton.icon(
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onPressed: () async {
+              await Navigator.of(context).push<void>(MaterialPageRoute(
+                builder:(_) => const SystemTrashScreen()));
+              if(mounted) await _readAccessible();
+            },
+            label: Text(GalleryLocale.t('trashReview'))),
+          TextButton.icon(icon: const Icon(Icons.archive_outlined),
+            onPressed: () async {
+              final restored=await showPreferencesBackupSheet(context);
+              if (mounted && restored==true) Navigator.pop(context,true);
+            },
+            label: Text(GalleryLocale.t('backupPreferences'))),
           TextButton.icon(icon: const Icon(Icons.privacy_tip_outlined),
             onPressed: () => showDialog<void>(context:context,
               builder:(ctx)=> AlertDialog(
@@ -126,6 +178,9 @@ class _AlbumSettingsState extends State<_AlbumSettings> {
                 actions: [TextButton(onPressed:()=>Navigator.pop(ctx),
                   child: Text(GalleryLocale.t('close')))])),
             label: Text(GalleryLocale.t('privacy'))),
+              ],
+            ),
+          ),
         ]),
       ),
     ));

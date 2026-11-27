@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import '../localization.dart';
 import '../services/album_pager.dart';
-import '../widgets/local_photo.dart';
+import '../widgets/media_viewer.dart';
 
 /// Open a photo from the infinite canvas and swipe within ONLY its album.
 /// The album is loaded by stable MediaStore indices, not from the random
@@ -19,11 +20,13 @@ class PhotoDetail extends StatefulWidget {
     required this.onTrashed,
     this.album,
     this.initialIndex = 0,
+    this.mediaVersion,
   });
 
   final AssetEntity asset;
   final AssetPathEntity? album;
   final int initialIndex;
+  final ValueListenable<int>? mediaVersion;
   final bool Function(AssetEntity) isFavorite;
   final Future<void> Function(AssetEntity) onFavorite;
   final Future<void> Function(AssetEntity) onTrashed;
@@ -40,11 +43,15 @@ class _PhotoDetailState extends State<PhotoDetail> {
   AssetEntity? _current;
   bool _busy = false;
   bool _countError = false;
+  bool _stale = false;
+  int? _openVersion;
   final Map<int, Future<AssetEntity?>> _requests = {};
 
   @override
   void initState() {
     super.initState();
+    _openVersion=widget.mediaVersion?.value;
+    widget.mediaVersion?.addListener(_mediaChanged);
     _index = widget.album == null ? 0 : math.max(0, widget.initialIndex);
     _count = _index + 1;
     _current = widget.asset;
@@ -58,10 +65,16 @@ class _PhotoDetailState extends State<PhotoDetail> {
     }
   }
 
+  void _mediaChanged() {
+    if (widget.mediaVersion?.value != _openVersion && mounted) {
+      setState(() => _stale = true);
+    }
+  }
+
   Future<void> _loadCount() async {
     try {
       final count = await widget.album!.assetCountAsync;
-      if (!mounted) return;
+      if (!mounted || _stale) return;
       // Never drop the opened image while an album is changing externally.
       setState(() => _count = math.max(_index + 1, count));
     } catch (_) {
@@ -75,7 +88,7 @@ class _PhotoDetailState extends State<PhotoDetail> {
   );
 
   Future<void> _activate(int index) async {
-    if (index == _index) return;
+    if (index == _index || _stale) return;
     setState(() {
       _index = index;
       _current = null;
@@ -91,7 +104,7 @@ class _PhotoDetailState extends State<PhotoDetail> {
     _requests.removeWhere((key, _) => (key - index).abs() > 3);
     try {
       final asset = await _assetAt(index);
-      if (!mounted || index != _index) return;
+      if (!mounted || index != _index || _stale) return;
       setState(() => _current = asset);
     } catch (_) {
       if (mounted && index == _index) {
@@ -152,6 +165,7 @@ class _PhotoDetailState extends State<PhotoDetail> {
 
   @override
   void dispose() {
+    widget.mediaVersion?.removeListener(_mediaChanged);
     _controller.dispose();
     _pager?.clear();
     super.dispose();
@@ -194,7 +208,13 @@ class _PhotoDetailState extends State<PhotoDetail> {
           child: Text(GalleryLocale.t('albumReadError'),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.orangeAccent))),
+        if (_stale) MaterialBanner(
+          content: Text(GalleryLocale.t('albumChanged')),
+          actions: [TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(GalleryLocale.t('close')))]),
         Expanded(child: PageView.builder(
+          physics: _stale ? const NeverScrollableScrollPhysics() : null,
           key: const Key('gallerydrift-album-pageview'),
           controller: _controller,
           itemCount: _count,
@@ -211,8 +231,8 @@ class _PhotoDetailState extends State<PhotoDetail> {
               if (photo == null) {
                 return const Center(child: CircularProgressIndicator());
               }
-              return Center(child: LocalPhoto(
-                key: ValueKey(photo.id), asset: photo, contain: true));
+              return MediaViewer(key: ValueKey(photo.id),
+                asset: photo,active: index == _index);
             },
           ),
         )),

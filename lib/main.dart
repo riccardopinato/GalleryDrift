@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/painting.dart';
 import 'package:drift_core/drift_core.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -6,14 +8,22 @@ import 'localization.dart';
 import 'services/local_gallery.dart';
 import 'search/combined_search.dart';
 import 'search/visual_index.dart';
+import 'search/background_indexer.dart';
+import 'semantic_lab/background_semantic.dart';
+import 'semantic_lab/semantic_index.dart';
+import 'semantic_lab/semantic_lab_screen.dart';
 import 'screens/album_settings.dart';
 import 'screens/photo_detail.dart';
+import 'screens/batch_selection.dart';
 import 'widgets/local_photo.dart';
 import 'services/gallery_thumbnail_cache.dart';
+import 'services/catalog_delta.dart';
+import 'ui/gallery_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GalleryLocale.initialize();
+  await BackgroundIndexer.initialize();
   PaintingBinding.instance.imageCache.maximumSize = 110;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 48 * 1024 * 1024;
   runApp(const GalleryDriftApp());
@@ -24,11 +34,8 @@ class GalleryDriftApp extends StatelessWidget {
   @override Widget build(BuildContext context) =>
     ValueListenableBuilder<String>(valueListenable:GalleryLocale.current,
       builder:(context,language,_)=>MaterialApp(
-        title:'Gallery Drift',debugShowCheckedModeBanner:false,
-        theme:ThemeData(brightness:Brightness.dark,
-          scaffoldBackgroundColor:const Color(0xFF101117),
-          colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xFFE5C8A5),
-            brightness:Brightness.dark)),
+        title:'Gallery Drift AI Lab',debugShowCheckedModeBanner:false,
+        theme:GalleryTheme.build(),
         home:const GalleryHome()));
 }
 
@@ -37,35 +44,119 @@ class GalleryHome extends StatefulWidget {
   @override State<GalleryHome> createState()=>_GalleryHomeState();
 }
 
-class _GalleryHomeState extends State<GalleryHome> {
+class _GalleryHomeState extends State<GalleryHome> with WidgetsBindingObserver {
   final _source=LocalGallery();
   final _visual=VisualIndex();
   Set<String> _selected = {};
   Set<String> _favorites = {};
   List<AssetEntity> _assets=[];
   bool _busy=true, _favoritesOnly=false;
+  bool _viewerOpen=false, _pendingMediaChange=false;
+  int _refreshGeneration=0, _indexed=0, _total=0;
   String? _error;
+  Timer? _changeTimer;
+  late final ValueChanged<MethodCall> _mediaCallback;
+  final ValueNotifier<int> _mediaVersion=ValueNotifier(0);
 
-  @override void initState(){super.initState();_visual.load();_refresh();}
+  @override void initState(){
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _visual.load();
+    _mediaCallback = (_) {
+      if (!mounted) return;
+      _mediaVersion.value++;
+      if (_viewerOpen) {
+        _pendingMediaChange = true;
+      } else {
+        _scheduleRefresh();
+      }
+    };
+    PhotoManager.addChangeCallback(_mediaCallback);
+    PhotoManager.startChangeNotify().catchError((Object _) {});
+    _refresh();
+  }
 
-  @override void dispose(){_visual.dispose();super.dispose();}
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    if (_viewerOpen) {
+      // External gallery apps can change media while the viewer is paused.
+      // Stop swipes on a stale album until the user returns to the canvas.
+      _mediaVersion.value++;
+      _pendingMediaChange = true;
+    } else {
+      _scheduleRefresh();
+    }
+  }
+
+  void _scheduleRefresh() {
+    _changeTimer?.cancel();
+    _changeTimer = Timer(const Duration(milliseconds: 600), () {
+      if (mounted) _refresh();
+    });
+  }
+
+  @override void dispose(){
+    WidgetsBinding.instance.removeObserver(this);
+    _changeTimer?.cancel();
+    PhotoManager.removeChangeCallback(_mediaCallback);
+    PhotoManager.stopChangeNotify().catchError((Object _) {});
+    _mediaVersion.dispose();
+    _visual.dispose();
+    super.dispose();
+  }
 
   Future<void> _refresh() async {
-    setState(() {_busy=true;_error=null;});
+    final generation=++_refreshGeneration;
+    if (!mounted) return;
+    setState(() {_busy=true;_error=null;_indexed=0;_total=0;});
     try {
       final selected=await _source.selected();
       final favorites=await _source.favorites();
       final access = selected.isNotEmpty ?
         await _source.permission() : null;
+      if (!mounted || generation!=_refreshGeneration) return;
       final photos=selected.isEmpty ? <AssetEntity>[] :
         access != null && access.hasAccess ?
-          await _source.selectedPhotos(selected) : <AssetEntity>[];
-      if(!mounted)return;
-      setState((){_selected=selected;_favorites=favorites;_assets=photos;
-        _busy=false;_error=selected.isNotEmpty &&
-          !(access?.hasAccess ?? false) ? GalleryLocale.t('denied') : null;});
+          await _source.selectedPhotos(
+            selected,
+            shouldCancel: () => !mounted || generation!=_refreshGeneration,
+            onProgress: (done, total) {
+              if (mounted && generation==_refreshGeneration) {
+                setState(() {_indexed=done;_total=total;});
+              }
+            }) : <AssetEntity>[];
+      if(!mounted || generation!=_refreshGeneration)return;
+      final delta=CatalogDelta.between(
+        [for(final a in _assets)
+          CatalogItemRevision(a.id,a.modifiedDateTime.millisecondsSinceEpoch)],
+        [for(final a in photos)
+          CatalogItemRevision(a.id,a.modifiedDateTime.millisecondsSinceEpoch)]);
+      if (delta.changed && _visual.isRunning) _visual.cancel();
+      for (final id in delta.invalidatedIds) {
+        GalleryThumbnailCache.instance.evict(id);
+      }
+      _visual.forgetAll(delta.invalidatedIds);
+      if(selected.isNotEmpty && (delta.changed || generation==1)) {
+        unawaited(BackgroundIndexer.schedule());
+        unawaited(SemanticBackground.schedule());
+      }
+      if(delta.changed && (access?.hasAccess??false)) {
+        unawaited(SemanticIndex.reconcile(photos));
+      }
+      // Preserve favorites for temporarily inaccessible media. Do not
+      // silently delete user preference IDs when Android narrows access.
+      if(!mounted || generation!=_refreshGeneration)return;
+      setState((){
+        _selected=selected;
+        _favorites=favorites;
+        _assets=delta.changed?photos:_assets;
+        _busy=false;
+        _error=selected.isNotEmpty &&
+          !(access?.hasAccess ?? false) ? GalleryLocale.t('denied') : null;
+      });
     } catch(e) {
-      if(!mounted)return;
+      if(!mounted || generation!=_refreshGeneration)return;
       setState((){_busy=false;_error='$e';});
     }
   }
@@ -85,37 +176,68 @@ class _GalleryHomeState extends State<GalleryHome> {
     if(mounted)setState(()=>_favorites=next);
   }
 
-  Future<void> _onTrashed(AssetEntity photo) async {
-    _source.applyTrashed(photo.id);
-    GalleryThumbnailCache.instance.evict(photo.id);
-    _visual.forget(photo.id);
-    // An asset removed in the viewer is also removed from the canvas,
-    // search results, and the app-local favorites.
-    final next = {..._favorites}..remove(photo.id);
-    if (next.length != _favorites.length) {
-      await _source.saveFavorites(next);
+  Future<void> _onTrashed(AssetEntity photo) => _onTrashedBatch([photo]);
+
+  Future<void> _onTrashedBatch(List<AssetEntity> removed) async {
+    if (removed.isEmpty) return;
+    final ids=removed.map((photo)=>photo.id).toSet();
+    for (final photo in removed) {
+      _source.applyTrashed(photo.id);
+      GalleryThumbnailCache.instance.evict(photo.id);
     }
-    if (!mounted) return;
+    _visual.forgetAll(ids);
+    final next={..._favorites}..removeAll(ids);
+    if(next.length!=_favorites.length) await _source.saveFavorites(next);
+    if(!mounted)return;
     setState(() {
-      _favorites = next;
-      _assets = _assets.where((a) => a.id != photo.id).toList();
+      _favorites=next;
+      _assets=_assets.where((asset)=>!ids.contains(asset.id)).toList();
     });
+    // Native change signals can be delayed on some devices. Reconcile even
+    // when no callback arrives, after any open photo viewer has been closed.
+    if (_viewerOpen) {
+      _pendingMediaChange=true;
+    } else {
+      _scheduleRefresh();
+    }
   }
 
+  Future<void> _openBatch() async =>
+    showBatchSelection(context,List<AssetEntity>.of(_assets),_onTrashedBatch);
+
   Future<void> _openPhoto(AssetEntity photo) async {
+    if (_viewerOpen) return;
+    _viewerOpen=true;
     final origin = _source.positionFor(photo.id);
+    try {
+      await Navigator.push<void>(context,MaterialPageRoute(
+        builder:(context)=>PhotoDetail(
+          asset: photo,
+          album: origin?.album,
+          initialIndex: origin?.index ?? 0,
+          mediaVersion: _mediaVersion,
+          isFavorite: (asset) => _favorites.contains(asset.id),
+          onFavorite: _toggleFavorite,
+          onTrashed: _onTrashed,
+        )));
+    } finally {
+      _viewerOpen=false;
+      if (_pendingMediaChange) {
+        _pendingMediaChange=false;
+        _scheduleRefresh();
+      }
+    }
+  }
+
+  Future<void> _openSemanticLab() async {
     await Navigator.push<void>(context,MaterialPageRoute(
-      builder:(context)=>PhotoDetail(
-        asset: photo,
-        album: origin?.album,
-        initialIndex: origin?.index ?? 0,
-        isFavorite: (asset) => _favorites.contains(asset.id),
-        onFavorite: _toggleFavorite,
-        onTrashed: _onTrashed,
-      )));
+      builder:(_)=>SemanticLabScreen(
+        assets:List<AssetEntity>.of(_assets),
+        onPhoto:_openPhoto)));
   }
 
   Future<void> _search() async {
+    unawaited(_visual.refresh());
     final selected=await showSearch<AssetEntity?>(
       context:context,delegate:_LocalSearch(
         _assets, _source.albumNameFor, _visual));
@@ -125,8 +247,19 @@ class _GalleryHomeState extends State<GalleryHome> {
   @override Widget build(BuildContext context) {
     final displayed=_favoritesOnly ?
       _assets.where((x)=>_favorites.contains(x.id)).toList() : _assets;
-    return Scaffold(body:Stack(fit:StackFit.expand,children:[
-      if(_busy)const Center(child:CircularProgressIndicator())
+    return Scaffold(backgroundColor:GalleryTheme.background,
+      body:Stack(fit:StackFit.expand,children:[
+      IgnorePointer(child:Align(alignment:Alignment.topCenter,
+        child:Container(height:140,
+          decoration:const BoxDecoration(gradient:LinearGradient(
+            begin:Alignment.topCenter,end:Alignment.bottomCenter,
+            colors:[Color(0xD9000000),Color(0x00000000)]))))),
+      if(_busy && _assets.isEmpty) Center(child:Column(
+        mainAxisSize:MainAxisSize.min,children:[
+          const CircularProgressIndicator(),
+          const SizedBox(height:16),
+          Text('$_indexed / $_total',style:const TextStyle(color:Colors.white70)),
+        ]))
       else if(_error!=null) Center(child:Padding(
         padding:const EdgeInsets.all(30),child:Column(
           mainAxisSize:MainAxisSize.min,children:[
@@ -151,7 +284,7 @@ class _GalleryHomeState extends State<GalleryHome> {
         items:displayed,
         cameraKey:_favoritesOnly ? 'gallerydrift.camera.favorites' :
           'gallerydrift.camera.all',
-        compactBrand:'G∞',fullBrand:'gallerydrift  ∞',
+        compactBrand:'G∞ LAB',fullBrand:'gallerydrift AI LAB ∞',
         hintText:'Gallery Drift  ·  ∞',
         recenterTooltip:'Center',
         onOpen:_openPhoto,
@@ -159,16 +292,45 @@ class _GalleryHomeState extends State<GalleryHome> {
           GalleryThumbnailCache.instance.prefetch(asset),
         tileBuilder:(context,asset,zoom)=>LocalPhoto(
           key:ValueKey(asset.id),asset:asset)),
+      if (_busy && _assets.isNotEmpty) Positioned(
+        left:18,right:18,bottom:70,
+        child:SafeArea(top:false,child:Column(children:[
+          LinearProgressIndicator(value:_total>0 ?
+            (_indexed/_total).clamp(0.0,1.0) : null),
+          const SizedBox(height:5),
+          Text('$_indexed / $_total',style:const TextStyle(
+            fontSize:11,color:Colors.white70)),
+        ]))),
+      if (!_busy && _error==null && _assets.isNotEmpty)
+        Positioned(right:16,bottom:14,
+          child:SafeArea(top:false,
+            child:Tooltip(
+              message:GalleryLocale.t('multiSelect'),
+              child:IconButton.filledTonal(
+                key:const Key('gallerydrift-batch-select'),
+                onPressed:_openBatch,
+                icon:const Icon(Icons.checklist_rounded),
+                style:IconButton.styleFrom(
+                  backgroundColor:const Color(0xD3232530),
+                  foregroundColor:GalleryTheme.accent))))) ,
       Positioned(top:0,left:0,right:0,child:SafeArea(bottom:false,
         child:LayoutBuilder(builder:(context,constraints){
           final w=constraints.maxWidth;
           return SizedBox(height:53,child:Stack(children:[
-            Positioned(left:w/3,width:w/3,top:5,
+            Positioned(left:10,top:5,
+              child:OutlinedButton.icon(
+                onPressed:_openSemanticLab,
+                icon:const Icon(Icons.psychology_alt_outlined,size:17),
+                label:const Text('AI Lab'),
+                style:OutlinedButton.styleFrom(
+                  foregroundColor:const Color(0xFFE5C8A5),
+                  backgroundColor:const Color(0xD3222630)))),
+            Positioned(left:w*0.34,width:w*0.36,top:5,
               child:OutlinedButton.icon(onPressed:_search,
                 icon:const Icon(Icons.search,size:18),
                 label:Text(GalleryLocale.t('search')),
                 style:OutlinedButton.styleFrom(
-                  backgroundColor:const Color(0xD31B1B22),
+                  backgroundColor:const Color(0xDF1D222D),
                   foregroundColor:Colors.white))),
             Positioned(right:62,top:5,child:IconButton.filledTonal(
               tooltip:GalleryLocale.t('favorites'),
@@ -184,7 +346,13 @@ class _GalleryHomeState extends State<GalleryHome> {
 }
 
 class _LocalSearch extends SearchDelegate<AssetEntity?> {
-  _LocalSearch(this.assets, this.albumName, this.indexer);
+  _LocalSearch(this.assets,this.albumName,this.indexer) {
+    _poll=Timer.periodic(const Duration(seconds:4),
+      (_)=>unawaited(indexer.refresh()));
+  }
+
+  Timer? _poll;
+  @override void dispose(){_poll?.cancel();super.dispose();}
 
   final List<AssetEntity> assets;
   final String Function(String) albumName;
@@ -209,7 +377,7 @@ class _LocalSearch extends SearchDelegate<AssetEntity?> {
             album: albumName(photo.id),
             labels: indexer.labelsFor(photo)),
       ];
-      final hits = PhotoSearch.find(query, documents);
+      final hits = PhotoSearch.find(query, documents, limit:null);
       final lookup = {for (final photo in assets) photo.id: photo};
       return Column(children: [
         Padding(padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
@@ -218,21 +386,22 @@ class _LocalSearch extends SearchDelegate<AssetEntity?> {
               crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(GalleryLocale.t('visualSearch'),
                   style: Theme.of(context).textTheme.titleSmall),
-                Text(indexer.isRunning
-                  ? '${GalleryLocale.t('indexing')}: ${indexer.progress} / ${indexer.total}'
-                  : '${GalleryLocale.t('indexed')}: ${indexer.cachedCount} / ${assets.length}',
-                  style: const TextStyle(fontSize: 11, color: Colors.white60)),
+                Text('${GalleryLocale.t('tagged')}: ${indexer.taggedCount}'
+                  ' · ${GalleryLocale.t('unlabeled')}: ${indexer.unlabeledCount}'
+                  ' · ${GalleryLocale.t('failed')}: ${indexer.failedCount}'
+                  ' / ${assets.where((a)=>a.type==AssetType.image).length}',
+                  style:const TextStyle(fontSize:11,color:Colors.white60)),
               ])),
-            if (indexer.isRunning) TextButton.icon(
-              onPressed: indexer.cancel, icon: const Icon(Icons.stop),
-              label: Text(GalleryLocale.t('stop')))
-            else TextButton.icon(
-              onPressed: () => indexer.index(assets),
+            TextButton.icon(
+              onPressed: () => BackgroundIndexer.schedule(),
               icon: const Icon(Icons.auto_awesome_outlined),
               label: Text(GalleryLocale.t('analyzePhotos'))),
             IconButton(tooltip: GalleryLocale.t('clearVisualIndex'),
-              onPressed: indexer.isRunning ? null : indexer.clear,
-              icon: const Icon(Icons.delete_sweep_outlined)),
+              onPressed: indexer.isRunning ? null : () async {
+                await indexer.retryFailures();
+                await BackgroundIndexer.schedule();
+              },
+              icon: const Icon(Icons.refresh_rounded)),
           ])),
         if (indexer.isRunning && indexer.total > 0) LinearProgressIndicator(
           value: indexer.progress / indexer.total),
