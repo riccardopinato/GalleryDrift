@@ -48,10 +48,13 @@ def update_pin(new_sha: str) -> bool:
         return False
     new_content = source[:match.start(2)] + new_sha + source[match.end(2):]
     provenance = DOC.read_text(encoding="utf-8")
-    if previous not in provenance:
+    current_pin_line = f"Pinned core source commit: {previous}"
+    if current_pin_line not in provenance:
         raise RuntimeError("Provenance document no longer matches the pinned SHA")
     PUB.write_text(new_content, encoding="utf-8")
-    DOC.write_text(provenance.replace(previous, new_sha), encoding="utf-8")
+    # Replace only the live pin, never immutable historical commit references.
+    DOC.write_text(provenance.replace(current_pin_line,
+        f"Pinned core source commit: {new_sha}", 1), encoding="utf-8")
     print("DRIFT_CORE_NEW_PIN", previous, "->", new_sha)
     return True
 
