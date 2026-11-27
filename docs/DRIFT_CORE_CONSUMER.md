@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: ec5136e90a3cbbb71ac071db15699cc56597569b
+Pinned core source commit: 564396436d7b6d185b1bcf219ff7d00735b2b91d
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -29,3 +29,16 @@ CI evidence on this exact Gallery HEAD is required before merge. Physical gestur
 ## G2 museum controls compatibility test (2026-11-27)
 
 Final source pin: Art Drift G2 Core merged PR #106, canonical commit `ec5136e90a3cbbb71ac071db15699cc56597569b`. No changes to Gallery-owned photo scanning, selection, deletion, lifecycle or controls. G2 callbacks are optional and `museumControls=false` by default, so Gallery should remain unchanged. Exact merged ArtDrift Core SHA is now pinned. Run analyze/test/Android exact-head before merge, with physical gesture acceptance separate.
+
+## 2026-11-27 current Drift Core camera contract
+
+Immutable consumer ref: `564396436d7b6d185b1bcf219ff7d00735b2b91d`. This is the canonical Art Drift
+`main` commit containing camera-preservation fixes in shared Drift Core
+since the previous G2 pin `ec5136e90a3cbbb71ac071db15699cc56597569b`. History above intentionally
+retains source commits of earlier merges. Gallery-owned photo permissions,
+selection, deletion and image data remain unchanged.
+
+This is a manual PR because the scheduled GalleryDrift sync job could not
+create GitHub pull requests with the repository's current Actions bot
+permissions. Do not equate this PR with fixing the repository setting.
+Exact-head Gallery Android CI and physical device checks are separate gates.
