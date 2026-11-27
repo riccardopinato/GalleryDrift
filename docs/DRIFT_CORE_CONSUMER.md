@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: 832ae259aa2988fc3b0e1db261034a596a9a793f
+Pinned core source commit: 1f7d19f91502405fe3d7d8e5538977d6117cd2ee
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -19,3 +19,9 @@ The gallery NEVER copies Art Drift canvas code: it imports drift_core and suppli
 - Play Store media access policy must be reviewed: broad READ_MEDIA_IMAGES is defensible only for sustained photo-gallery core functionality; Data Safety / hosted privacy policy not certified.
 
 No source tests or physical QA are declared passed until GitHub CI evidence exists. This scaffold is a consumer integration, not a Store-ready release.
+
+## 2026-11-27 shared Core update
+
+Source: Art Drift PR #85 merged to canonical ArtDrift main as `1f7d19f91502405fe3d7d8e5538977d6117cd2ee`.
+This Gallery PR updates only the immutable Git ref, without copying ArtDrift canvas implementation or accessing user photo data. The previous `pubspec.yaml` pin was `2dac51a6be98ed364d1e95983d1f330c84354ef7`; the earlier documentation had a stale `832ae259...` pin and is corrected here.
+CI evidence on this exact Gallery HEAD is required before merge. Physical gesture/visual validation remains separate; no Play readiness claimed.
