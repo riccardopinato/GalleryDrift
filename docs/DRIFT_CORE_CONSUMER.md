@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: 75cbc4db6e9a292a727dbabb8dacd2c13564d8d3
+Pinned core source commit: ec5136e90a3cbbb71ac071db15699cc56597569b
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -28,4 +28,4 @@ CI evidence on this exact Gallery HEAD is required before merge. Physical gestur
 
 ## G2 museum controls compatibility test (2026-11-27)
 
-Temporary pin: Art Drift G2 Core candidate PR #106, commit `75cbc4db6e9a292a727dbabb8dacd2c13564d8d3`. No changes to Gallery-owned photo scanning, selection, deletion, lifecycle or controls. G2 callbacks are optional and `museumControls=false` by default, so Gallery should remain unchanged. After the Art PR merges, update to the exact merged canonical Art main commit before merging this consumer PR, and rerun Android CI.
+Final source pin: Art Drift G2 Core merged PR #106, canonical commit `ec5136e90a3cbbb71ac071db15699cc56597569b`. No changes to Gallery-owned photo scanning, selection, deletion, lifecycle or controls. G2 callbacks are optional and `museumControls=false` by default, so Gallery should remain unchanged. Exact merged ArtDrift Core SHA is now pinned. Run analyze/test/Android exact-head before merge, with physical gesture acceptance separate.
