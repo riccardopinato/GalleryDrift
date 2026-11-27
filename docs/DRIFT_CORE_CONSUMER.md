@@ -1,7 +1,7 @@
 # Gallery Drift — Drift Core consumer 0.1
 
 Git source: https://github.com/riccardopinato/ArtDrift-Infinite-Art-Gallery
-Pinned core source commit: ec5136e90a3cbbb71ac071db15699cc56597569b
+Pinned core source commit: 564396436d7b6d185b1bcf219ff7d00735b2b91d
 Package path: packages/drift_core
 Consumer repo: riccardopinato/GalleryDrift
 
@@ -29,3 +29,12 @@ CI evidence on this exact Gallery HEAD is required before merge. Physical gestur
 ## G2 museum controls compatibility test (2026-11-27)
 
 Final source pin: Art Drift G2 Core merged PR #106, canonical commit `ec5136e90a3cbbb71ac071db15699cc56597569b`. No changes to Gallery-owned photo scanning, selection, deletion, lifecycle or controls. G2 callbacks are optional and `museumControls=false` by default, so Gallery should remain unchanged. Exact merged ArtDrift Core SHA is now pinned. Run analyze/test/Android exact-head before merge, with physical gesture acceptance separate.
+
+## Random museum start compatibility — 2026-11-27
+
+Canonical merged Art Drift PR #110 source pin `45984f1ee15c7c8d80d7c4a65c18f67bf3674407`. Shared Core `initialWorldCenter` is nullable and Gallery never supplies it, preserving saved album canvas camera, photo permissions, local trash and favorites. Art PR #110 has merged; this exact canonical Art main commit is ready for Gallery Android exact-head CI. Physical gesture/device QA remains separate.
+
+
+## Candidate #112 camera-persistence QA (2026-11-27)
+
+Final immutable pin to merged canonical Art Drift PR #112 squash commit `564396436d7b6d185b1bcf219ff7d00735b2b91d`; Gallery continues to pass `initialWorldCenter: null`, with original `gallerydrift.*` camera coordinates, album selection, deletion and permissions unaffected. This is the exact canonical source SHA. Android analyze, unit tests, ABI/signature checks and ARM64 APK workflow must pass on this final Gallery HEAD before merge. Physical gesture validation remains separate.
