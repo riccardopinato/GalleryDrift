@@ -17,6 +17,23 @@ void main() {
       labels:['Skyscraper']),
   ];
 
+  test('cat synonyms, feline, kitten and generic pets', () {
+    const semantic=[
+      PhotoSearchDocument(id:'cat',filename:'IMG_1.jpg',
+        album:'Summer',labels:['Cat','Pet']),
+      PhotoSearchDocument(id:'kitten',filename:'IMG_2.jpg',
+        album:'Summer',labels:['Kitten']),
+      PhotoSearchDocument(id:'dog',filename:'IMG_3.jpg',
+        album:'Summer',labels:['Dog','Pet']),
+    ];
+    expect(PhotoSearch.find('gatto',semantic).map((e)=>e.document.id).toSet(),
+      {'cat','kitten'});
+    expect(PhotoSearch.find('felino',semantic).map((e)=>e.document.id).toSet(),
+      {'cat','kitten'});
+    expect(PhotoSearch.find('animale domestico',semantic).length,3);
+    expect(PhotoSearch.find('gatto',semantic).any((e)=>e.document.id=='dog'),false);
+  });
+
   test('cat, moon and camper can be found from labels and filenames', () {
     expect(PhotoSearch.find('gatto',docs).map((x)=>x.document.id),['1']);
     expect(PhotoSearch.find('luna',docs).map((x)=>x.document.id),['5','2']);
@@ -30,9 +47,21 @@ void main() {
   test('no false match for unknown city in visual labels', () {
     expect(PhotoSearch.find('Tokyo',docs),isEmpty);
   });
+  test('full-catalog search includes records past index 800', () {
+    final many = [
+      for (var i = 0; i < 1503; i++)
+        PhotoSearchDocument(id:'photo-$i',filename:i>1450
+          ? 'ricordo speciale.jpg':'photo_$i.jpg',album:'Album esteso'),
+    ];
+    final matches = PhotoSearch.find('ricordo speciale',many,limit:null);
+    expect(matches.length,52);
+    expect(matches.last.document.id,'photo-1502');
+  });
+
   test('query requires all words, stays accent-insensitive', () {
     expect(PhotoSearch.find('gatto compleanno',docs).single.document.id,'1');
     expect(PhotoSearch.normalize('Città  PARIGI'),'citta parigi');
     expect(PhotoSearch.find('',docs),isEmpty);
   });
 }
+

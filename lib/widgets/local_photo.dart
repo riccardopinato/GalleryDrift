@@ -36,15 +36,25 @@ class _LocalPhotoState extends State<LocalPhoto> {
         : GalleryThumbnailCache.instance.thumbnail(widget.asset);
   }
 
+  Widget _decorate(Widget image) => Stack(fit:StackFit.expand,children:[
+    image,
+    if (widget.asset.type == AssetType.video)
+      const Center(child:DecoratedBox(
+        decoration:BoxDecoration(
+          color:Color(0x990A0A12),shape:BoxShape.circle),
+        child:Padding(padding:EdgeInsets.all(9),
+          child:Icon(Icons.play_arrow_rounded,color:Colors.white,size:25)))),
+  ]);
+
   @override
   Widget build(BuildContext context) {
     final warm = widget.contain ? null :
         GalleryThumbnailCache.instance.peek(widget.asset.id);
     if (warm != null) {
-      return Image.memory(warm, fit: BoxFit.cover,
-          gaplessPlayback: true, filterQuality: FilterQuality.low);
+      return _decorate(Image.memory(warm, fit: BoxFit.cover,
+          gaplessPlayback: true, filterQuality: FilterQuality.low));
     }
-    return FutureBuilder<Uint8List?>(
+    return _decorate(FutureBuilder<Uint8List?>(
     future: _thumbnail,
     builder: (context, snapshot) {
       if (!snapshot.hasData || snapshot.data == null) {
@@ -56,6 +66,6 @@ class _LocalPhotoState extends State<LocalPhoto> {
         fit: widget.contain ? BoxFit.contain : BoxFit.cover,
         gaplessPlayback: true, filterQuality: FilterQuality.low);
     },
-    );
+    ));
   }
 }

@@ -1,5 +1,6 @@
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'catalog_pager.dart';
 
 class AlbumPosition {
   const AlbumPosition({required this.album, required this.index});
@@ -12,7 +13,7 @@ class LocalGallery {
   static const selectedKey = 'gallerydrift.selectedAlbumIds.v1';
   static const favoritesKey = 'gallerydrift.favoriteAssetIds.v1';
   static const permissionOption = PermissionRequestOption(
-    androidPermission: AndroidPermission(type: RequestType.image, mediaLocation: false),
+    androidPermission: AndroidPermission(type: RequestType.common, mediaLocation: false),
   );
 
   /// Album position of each canvas image, captured while loading its selected
@@ -66,32 +67,51 @@ class LocalGallery {
       PhotoManager.requestPermissionExtend(requestOption: permissionOption);
 
   Future<List<AssetPathEntity>> albums() =>
-      PhotoManager.getAssetPathList(hasAll: false, type: RequestType.image);
+      PhotoManager.getAssetPathList(hasAll: false, type: RequestType.common);
 
-  /// Canvas bootstrap: bounded at 800 images per album to avoid freezing
-  /// on very large galleries. The album detail viewer independently pages
-  /// through the FULL folder using MediaStore range queries.
-  Future<List<AssetEntity>> selectedPhotos(Set<String> selectedIds) async {
-    _positions.clear();
-    if (selectedIds.isEmpty) return [];
-    final paths = await albums();
-    final result = <AssetEntity>[];
-    final seen = <String>{};
-    for (final path in paths) {
-      if (!selectedIds.contains(path.id)) continue;
-      for (var page = 0; page < 8; page++) {
-        final chunk = await path.getAssetListPaged(page: page, size: 100);
-        for (var i = 0; i < chunk.length; i++) {
-          final item = chunk[i];
-          if (seen.add(item.id)) {
-            result.add(item);
-            _positions[item.id] = AlbumPosition(
-              album: path, index: page * 100 + i);
-          }
-        }
-        if (chunk.length < 100) break;
-      }
+  /// Scan every item in chosen folders, one bounded MediaStore page at a time.
+  /// Only metadata is collected; image bytes remain lazy and cached separately.
+  /// The position map is swapped atomically after a complete successful pass,
+  /// preventing taps from using partially updated folder indices.
+  Future<List<AssetEntity>> selectedPhotos(
+    Set<String> selectedIds, {
+    void Function(int done, int total)? onProgress,
+    bool Function()? shouldCancel,
+  }) async {
+    if (selectedIds.isEmpty) {
+      _positions.clear();
+      return <AssetEntity>[];
     }
+    final paths = await albums();
+    final chosen = paths.where((p) => selectedIds.contains(p.id)).toList();
+    final counts = await Future.wait(
+      chosen.map((p) => p.assetCountAsync));
+    final total = counts.fold<int>(0, (sum, n) => sum + n);
+    final result = <AssetEntity>[];
+    final newPositions = <String, AlbumPosition>{};
+    var scanned = 0;
+    for (final path in chosen) {
+      if (shouldCancel?.call() ?? false) return <AssetEntity>[];
+      await CatalogPager.scan<AssetEntity>(
+        read: (page, size) => path.getAssetListPaged(page: page, size: size),
+        shouldCancel: shouldCancel,
+        onItem: (index, item) {
+          if (!newPositions.containsKey(item.id)) {
+            newPositions[item.id] = AlbumPosition(album: path, index: index);
+            result.add(item);
+          }
+        },
+        onPage: (count) {
+          scanned += count;
+          onProgress?.call(scanned, total);
+        },
+      );
+    }
+    if (shouldCancel?.call() ?? false) return <AssetEntity>[];
+    _positions
+      ..clear()
+      ..addAll(newPositions);
+    onProgress?.call(scanned, total);
     return result;
   }
 }
