@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -80,6 +81,13 @@ class _PhotoDetailState extends State<PhotoDetail> {
       _current = null;
     });
     _pager?.retainNear(index);
+    // Gallery-only metadata warmup; PageView remains responsive if MediaStore
+    // is slow or fails. AlbumPager evicts failures for foreground retry.
+    final pager = _pager;
+    if (pager != null) {
+      unawaited(pager.prefetchNext(index, totalCount: _count)
+          .catchError((Object _) {}));
+    }
     _requests.removeWhere((key, _) => (key - index).abs() > 3);
     try {
       final asset = await _assetAt(index);

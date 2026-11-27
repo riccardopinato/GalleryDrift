@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "spec_id": "FSL-20261127-GALLERY-PREFETCH",
+  "mode": "FAST",
+  "factory": {
+    "repository": "riccardopinato/App-Factory-Core",
+    "sha": "f8b9f550c544735237f19cdd723bd2df667ceee6",
+    "resolver": "CURRENT.yaml"
+  },
+  "target": {
+    "repository": "riccardopinato/GalleryDrift",
+    "source_sha": "dde42c11d96ee6258670b01ce9e7b3c273cc56ab"
+  },
+  "canonical_refs": {
+    "factory_current": {
+      "repository": "riccardopinato/App-Factory-Core",
+      "sha": "f8b9f550c544735237f19cdd723bd2df667ceee6",
+      "path": "CURRENT.yaml"
+    },
+    "product_bible": null,
+    "roadmap": null,
+    "agents": {
+      "repository": "riccardopinato/GalleryDrift",
+      "sha": "dde42c11d96ee6258670b01ce9e7b3c273cc56ab",
+      "path": "AGENTS.md"
+    },
+    "goldens": []
+  },
+  "scope": {
+    "includes": [
+      "Album detail sequential paging: warm next metadata page as the user approaches the boundary",
+      "Preserve existing bounded cached range semantics and foreground retry"
+    ],
+    "excludes": [
+      "Shared Art Drift canvas Core",
+      "Background photo ingestion",
+      "Thumbnail prefetch",
+      "Permissions, trash, ML, billing, cloud"
+    ],
+    "allowed_paths": [
+      "lib/services/album_pager.dart",
+      "lib/screens/photo_detail.dart",
+      "test/album_pager_test.dart",
+      "docs/spec_lite/gallery-album-prefetch/**"
+    ],
+    "forbidden_paths": [
+      "packages/**",
+      "android/**",
+      "assets/**"
+    ]
+  },
+  "risk": {
+    "data_loss": false,
+    "security": false,
+    "billing": false,
+    "native_lifecycle": false,
+    "migration": false,
+    "sensitive_data": false,
+    "release": false
+  },
+  "requirements": [
+    {
+      "id": "FR-001",
+      "text": "Warm only one next album page when a user approaches a page boundary, sharing the foreground cached Future and preserving album selection, privacy, and normal read retries.",
+      "status": "PROPOSED",
+      "conflicts_with": [],
+      "acceptance": [
+        {
+          "id": "AC-001",
+          "criterion": "At pageSize four, reaching index two causes exactly one range read for the next page, and index five reuses the warmed cache.",
+          "evidence_type": "UNIT_TEST"
+        },
+        {
+          "id": "AC-002",
+          "criterion": "Negative, empty, past-end, and final-page cases do not read outside the selected album or trigger unnecessary range queries.",
+          "evidence_type": "UNIT_TEST"
+        },
+        {
+          "id": "AC-003",
+          "criterion": "A failed MediaStore background prefetch is evicted and permits a fresh foreground retry with the correct resulting image.",
+          "evidence_type": "UNIT_TEST"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "required_checks": [
+      "UNIT_TEST",
+      "SOURCE_TEST"
+    ],
+    "manual_gate": false,
+    "rollback_plan": null
+  },
+  "approval": {
+    "status": "PROPOSED",
+    "decision_ref": null
+  },
+  "verification": {
+    "status": "NOT_VERIFIED",
+    "evidence_links": []
+  }
+}
