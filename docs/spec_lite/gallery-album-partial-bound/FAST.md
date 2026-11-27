@@ -15,3 +15,7 @@ FR-001 / AC-002: foreground at(8) reuses the bounded Future with no second range
 FR-001 / AC-003: all existing album pager tests remain green (UNIT_TEST).
 
 Initial status: `PROPOSED`; this document does not approve product scope, certify runtime/device, or replace GitHub/AppLab CI. No separate spec/plan/tasks/evidence ledger, per FAST lean decision. Read PR source diff, exact-head CI and any required device QA before final product adoption.
+
+## Integration receipt (source scope)
+
+PR [#20](https://github.com/riccardopinato/GalleryDrift/pull/20) merged to `30c26f2b23bccbf9237163467ef0fe664e915967`. Branch Android CI passed, including added regression. Postmerge Android [run](https://github.com/riccardopinato/GalleryDrift/actions/runs/45984531353) initially pending; do not mark as certified before success. Scope remains Gallery-only and runtime/device acceptance remains NOT_VERIFIED.
